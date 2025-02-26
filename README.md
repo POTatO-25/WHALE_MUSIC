@@ -9,5 +9,5 @@ Spotify Api를 사용하여 다양한 음악을 스트리밍하고, 음악과 �
 [프로젝트 개요]
 * 기간: 2024.09.02 ~ 2024.11.20
 * 팀원: 백엔드 5명
-* 사용기술: Java, Spring, Oracle, MyBatis
+* 사용기술: Java, Spring, Oracle, MyBatis, Jsp, JavaScript
 * 담당: 환경설정
