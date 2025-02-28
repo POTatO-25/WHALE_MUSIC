@@ -1,5 +1,6 @@
 package com.tech.whale.Image.controller;
 
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -19,36 +20,36 @@ import java.util.Map;
 public class ImageUploadController {
 
     private final Storage storage = StorageOptions.getDefaultInstance().getService();
-    private final String BUCKET_NAME = "whale_project";
+    private final String BUCKET_NAME = "whalemusic";
 
     @PostMapping("/uploadImageMessage")
     public ResponseEntity<Map<String, String>> uploadImageMessage(@RequestParam("file") MultipartFile file) throws IOException {
         String fileName = "whale/message/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        
+
         BlobInfo blobInfo = BlobInfo.newBuilder(BUCKET_NAME, fileName).build();
         storage.create(blobInfo, file.getBytes());
 
         String imageUrl = "https://storage.googleapis.com/" + BUCKET_NAME + "/" + fileName;
         Map<String, String> response = new HashMap<>();
         response.put("imageUrl", imageUrl);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @PostMapping("/uploadImageFeed")
     public ResponseEntity<Map<String, String>> uploadImageFeed(@RequestParam("file") MultipartFile file) throws IOException {
         String fileName = "whale/feed/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        
+
         BlobInfo blobInfo = BlobInfo.newBuilder(BUCKET_NAME, fileName).build();
         storage.create(blobInfo, file.getBytes());
 
         String imageUrl = "https://storage.googleapis.com/" + BUCKET_NAME + "/" + fileName;
         Map<String, String> response = new HashMap<>();
         response.put("imageUrl", imageUrl);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @PostMapping("/uploadImageSetting")
     public ResponseEntity<Map<String, String>> uploadImageSetting(@RequestParam("file") MultipartFile file) {
         Map<String, String> response = new HashMap<>();

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### google cloud storage ###
+/src/main/resources/gcp/*.json

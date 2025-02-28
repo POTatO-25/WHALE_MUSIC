@@ -20,11 +20,11 @@
 	<update id="updateProfile">
 		UPDATE user_info SET USER_NICKNAME = #{nickname}, USER_EMAIL = #{email}, USER_IMAGE_URL = #{userProfileImageUrl} WHERE USER_ID = #{userId}
 	</update>
-	
+
 	<select id="getCurrentProfileImage" parameterType="String" resultType="String">
-        SELECT user_image_url FROM user_info WHERE user_id = #{userId}
-    </select>
-	
+		SELECT user_image_url FROM user_info WHERE user_id = #{userId}
+	</select>
+
 	<select id="getCurrentPassword" resultType="String">
 		SELECT USER_PASSWORD FROM USER_INFO WHERE USER_ID = #{session_user_id}
 	</select>
@@ -100,7 +100,7 @@
 											 WHEN #{right} = 'message' THEN 2
 											 ELSE 0
 				END
-		WHERE USER_ID = #{userId}
+		WHERE USER_ID = #{session_user_id}
 	</update>
 	<select id="getPageAccessSetting" resultType="com.tech.whale.setting.dto.PageAccessDto">
 		SELECT PAGE_ACCESS_MYPAGE, PAGE_ACCESS_NOTIFICATION, PAGE_ACCESS_SETTING, PAGE_ACCESS_MUSIC, PAGE_ACCESS_MESSAGE
@@ -140,7 +140,7 @@
 					WHEN #{settingType} = 'message' AND #{selectedValue} = 'right' THEN 1
 					ELSE page_access_message
 					END
-		WHERE user_id = #{userId}
+		WHERE user_id = #{session_user_id}
 	</update>
 	<select id="getFilteredPostLikeList" parameterType="map" resultType="com.tech.whale.setting.dto.LikeListDto">
 		<choose>

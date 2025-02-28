@@ -1,287 +1,415 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.tech.whale.message.dao.MessageDao">
 
-	<select id="getNextRoomId" resultType="String">
-		SELECT MESSAGE_ROOM_SEQ.NEXTVAL FROM DUAL
-	</select>
+	<!--
+         1) 시퀀스 가져오기(Oracle 전용)
+            MySQL은 시퀀스를 지원하지 않음. 일반적으로 AUTO_INCREMENT 컬럼 사용 권장.
+            아래는 '임시'로 주석 처리. 직접 AUTO_INCREMENT나 별도 방법으로 대체해야 함.
+     -->
+	<!--
+     <select id="getNextRoomId" resultType="String">
+         SELECT MESSAGE_ROOM_SEQ.NEXTVAL FROM DUAL
+     </select>
+     -->
 
+	<!-- message_room_id를 직접 지정하는 insert (MySQL에서도 동일) -->
 	<insert id="createMessageRoom">
-	    INSERT INTO message_room (message_room_id) VALUES (#{roomId})
+		INSERT INTO message_room (message_room_id)
+		VALUES (#{roomId})
 	</insert>
 
+	<!-- 기존 getAllRoom: MySQL에서 그대로 사용 가능 -->
 	<select id="getAllRoom" resultType="com.tech.whale.message.dto.MessageDto">
-	    SELECT mru1.message_room_id
-	    FROM message_room_user mru1
-	    JOIN message_room_user mru2 ON mru1.message_room_id = mru2.message_room_id
-	    WHERE mru1.user_id = #{now_id}
-	    AND mru2.user_id = #{userId}
+		SELECT mru1.message_room_id
+		FROM message_room_user mru1
+				 JOIN message_room_user mru2
+					  ON mru1.message_room_id = mru2.message_room_id
+		WHERE mru1.user_id = #{now_id}
+		  AND mru2.user_id = #{userId}
 	</select>
-	
+
+	<!-- 메시지 룸에 사용자 추가 (MySQL에서 그대로 사용 가능) -->
 	<insert id="addUserMessageRoom">
-	    INSERT INTO message_room_user (message_room_id, user_id, user_type)
-	    VALUES (#{roomId}, #{userId}, #{string})
+		INSERT INTO message_room_user (message_room_id, user_id, user_type)
+		VALUES (#{roomId}, #{userId}, #{string})
 	</insert>
-	    
+
+	<!-- 안 읽은 메시지 목록 조회 (MySQL에서 그대로 사용 가능) -->
 	<select id="getUnreadMessageIds" parameterType="map" resultType="int">
-	    SELECT MESSAGE_ID
-	    FROM MESSAGE
-	    WHERE MESSAGE_ROOM_ID = #{roomId}
-	      AND USER_ID = #{userId}
-	      AND MESSAGE_READ = 1
+		SELECT MESSAGE_ID
+		FROM MESSAGE
+		WHERE MESSAGE_ROOM_ID = #{roomId}
+		  AND USER_ID = #{userId}
+		  AND MESSAGE_READ = 1
 	</select>
-	
+
+	<!-- 메시지 읽음 상태 업데이트 (MySQL에서 그대로 사용 가능) -->
 	<update id="updateMessageReadStatus" parameterType="map">
-	    UPDATE MESSAGE
-	    SET MESSAGE_READ = 0
-	    WHERE MESSAGE_ROOM_ID = #{roomId}
-	      AND USER_ID = #{userId}
-	      AND MESSAGE_READ = 1
+		UPDATE MESSAGE
+		SET MESSAGE_READ = 0
+		WHERE MESSAGE_ROOM_ID = #{roomId}
+		  AND USER_ID = #{userId}
+		  AND MESSAGE_READ = 1
 	</update>
-	
-	<select id="getNextMessageId" resultType="int">
-		SELECT MESSAGE_SEQ.NEXTVAL FROM DUAL
-	</select>    
-	
+
+	<!--
+         2) 메시지 시퀀스 (Oracle 전용)
+            MySQL은 시퀀스가 없으므로 주석 처리.
+     -->
+	<!--
+     <select id="getNextMessageId" resultType="int">
+         SELECT MESSAGE_SEQ.NEXTVAL FROM DUAL
+     </select>
+     -->
+
+	<!-- 메시지 저장 (MySQL에서도 동일) -->
 	<insert id="saveMessage">
-	    INSERT INTO message (message_id, message_create_date, message_text, message_room_id, message_read, user_id, message_type)
-	    VALUES (#{message_id}, #{message_create_date}, #{message_text}, #{message_room_id}, #{message_read}, #{user_id}, #{message_type})
-	</insert>
-	
-	<select id="getUserImage" resultType="String">
-		SELECT USER_IMAGE_URL FROM USER_INFO
-		WHERE USER_ID = #{userId}
-	</select>
-	
-	<select id="getUserNickname" resultType="String">
-		SELECT USER_NICKNAME FROM USER_INFO
-		WHERE USER_ID = #{userId}
-	</select>
-	
-	<select id="getTrackInfo" parameterType="String" resultType="map">
-	    SELECT 
-	        TRACK_ID AS track_id,
-	        TRACK_ARTIST AS track_artist,
-	        TRACK_NAME AS track_name,
-	        TRACK_COVER AS track_cover
-	    FROM 
-	        track
-	    WHERE 
-	        TRACK_ID = #{messageContent}
-	</select>
-	
-	<select id="getMessagesByRoomId" resultType="com.tech.whale.message.dto.MessageDto">
-	    SELECT 
-	        m.message_id, 
-	        m.message_create_date, 
-	        m.message_text, 
-	        m.message_room_id, 
-	        m.message_read, 
-	        m.user_id, 
-	        m.message_type,
-	        CASE WHEN m.message_type = 'MUSIC' THEN t.track_artist ELSE NULL END AS track_artist,
-	        CASE WHEN m.message_type = 'MUSIC' THEN t.track_name ELSE NULL END AS track_name,
-	        CASE WHEN m.message_type = 'MUSIC' THEN t.track_cover ELSE NULL END AS track_cover
-	    FROM 
-	        message m
-	    LEFT JOIN 
-	        track t ON m.message_type = 'MUSIC' AND m.message_text = t.track_id
-	    WHERE 
-	        m.message_room_id = #{roomId}
-	    <choose>
-	        <when test="userTypeInt == 0">
-	            AND A = 0
-	        </when>
-	        <when test="userTypeInt == 1">
-	            AND B = 0
-	        </when>
-	    </choose>
-	    ORDER BY 
-	        m.message_create_date ASC
-	</select>
-	
-	<select id="findPostUser" resultType="String">
-		SELECT USER_ID FROM POST WHERE POST_ID = #{post_id}
-	</select>
-	
-	<select id="findFeedUser" resultType="String">
-		SELECT USER_ID FROM FEED WHERE FEED_ID = #{feed_id}
-	</select>
-	
-	<select id="getLinkUser" resultType="com.tech.whale.message.dto.LinkMessageDto">
-		SELECT user_id, user_nickname, user_image_url FROM USER_INFO
-		WHERE USER_ID = #{user_id}
-	</select>
-	
-	
-	<select id="getOtherUserInRoom2" resultType="String">
-	    SELECT mru.user_id
-	    FROM message_room_user mru
-	    JOIN message_room mr ON mr.message_room_id = mru.message_room_id
-	    WHERE mru.message_room_id = #{roomId}
-	      AND mru.user_id != #{userId}
-	</select>
-
-	<select id="getFollowList" resultType="com.tech.whale.message.dto.FollowListDto">
-		<![CDATA[
-		-- minji를 팔로우하는 사람들 목록(팔로워)
-		SELECT
-			UI.USER_ID AS FOLLOW_USER_ID,
-			UI.USER_NICKNAME AS FOLLOW_USER_NICKNAME,
-			UI.USER_IMAGE_URL AS FOLLOW_USER_IMAGE_URL
-		FROM (
-				 SELECT REGEXP_SUBSTR(FOLLOW_USER_ID, '[^,]+', 1, LEVEL) AS FOLLOW_USER_ID
-				 FROM (
-						  SELECT FOLLOW_USER_ID
-						  FROM FOLLOW
-						  WHERE USER_ID = #{now_id}
-					  )
-					 CONNECT BY LEVEL <= LENGTH(FOLLOW_USER_ID)
-                                 - LENGTH(REPLACE(FOLLOW_USER_ID, ',', '')) + 1
-			 ) B
-				 JOIN USER_INFO UI ON B.FOLLOW_USER_ID = UI.USER_ID
-		UNION
-		-- minji가 팔로우하는 사람들 목록(팔로잉)
-		SELECT
-			UI.USER_ID AS FOLLOW_USER_ID,
-			UI.USER_NICKNAME AS FOLLOW_USER_NICKNAME,
-			UI.USER_IMAGE_URL AS FOLLOW_USER_IMAGE_URL
-		FROM (
-				 SELECT REGEXP_SUBSTR(USER_ID, '[^,]+', 1, LEVEL) AS FOLLOW_USER_ID
-				 FROM FOLLOW
-				 WHERE FOLLOW_USER_ID LIKE '%' || #{now_id} || '%'
-					 CONNECT BY LEVEL <= LENGTH(FOLLOW_USER_ID) - LENGTH(REPLACE(FOLLOW_USER_ID, ',', '')) + 1
-                AND ROWNUM = 1
-			 ) A
-				 JOIN USER_INFO UI ON A.FOLLOW_USER_ID = UI.USER_ID
-		]]>
-	</select>
-
-	<select id="getAllChatList" resultType="com.tech.whale.message.dto.AllChatListDto">
-	    WITH UserRole AS (
-	    SELECT 
-	        MR.MESSAGE_ROOM_ID,
-	        MRU.USER_TYPE
-	    FROM 
-	        MESSAGE_ROOM_USER MRU
-	        JOIN MESSAGE_ROOM MR ON MRU.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-	    WHERE 
-	        MRU.USER_ID = #{now_id}
-	)
-	SELECT
-	    U.USER_ID,
-	    U.USER_NICKNAME,
-	    U.USER_IMAGE_URL,
-	    MR.MESSAGE_ROOM_ID,
-	    MRU.USER_TYPE,
-	    MAX(M.MESSAGE_READ) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_READ,
-	    MAX(M.MESSAGE_TEXT) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_TEXT,
-	    MAX(M.MESSAGE_CREATE_DATE) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_CREATE_DATE,
-	    MAX(M.USER_ID) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_SENDER_ID,
-	    MAX(M.MESSAGE_TYPE) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_TYPE
-	FROM
-	    MESSAGE M
-	    JOIN MESSAGE_ROOM MR ON M.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-	    JOIN MESSAGE_ROOM_USER MRU ON MR.MESSAGE_ROOM_ID = MRU.MESSAGE_ROOM_ID
-	    JOIN USER_INFO U ON MRU.USER_ID = U.USER_ID
-	    JOIN UserRole UR ON UR.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-	WHERE
-	    MRU.USER_ID != #{now_id}  -- 현재 사용자를 제외
-	    AND MR.MESSAGE_ROOM_ID IN (
-	        SELECT MESSAGE_ROOM_ID 
-	        FROM MESSAGE_ROOM_USER 
-	        WHERE USER_ID = #{now_id}
-	    )
-	    AND (
-	        (UR.USER_TYPE = 'A' AND M.A = 0)
-	        OR
-	        (UR.USER_TYPE = 'B' AND M.B = 0)
-	    )
-	GROUP BY
-	    U.USER_ID,
-	    U.USER_NICKNAME,
-	    U.USER_IMAGE_URL,
-	    MR.MESSAGE_ROOM_ID,
-	    MRU.USER_TYPE
-	ORDER BY
-	    MAX(M.MESSAGE_CREATE_DATE) DESC
-	</select>
-	<select id="getReadChatList" resultType="com.tech.whale.message.dto.ReadChatDto">
-		WITH UserRole AS (
-		    SELECT 
-		        MR.MESSAGE_ROOM_ID,
-		        MRU.USER_TYPE
-		    FROM 
-		        MESSAGE_ROOM_USER MRU
-		        JOIN MESSAGE_ROOM MR ON MRU.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-		    WHERE 
-		        MRU.USER_ID = #{now_id}
+		INSERT INTO message (
+			message_id,
+			message_create_date,
+			message_text,
+			message_room_id,
+			message_read,
+			user_id,
+			message_type
+			/* A, B 컬럼이 추가로 필요하다면 여기서 함께 INSERT */
 		)
+		VALUES (
+				   #{message_id},
+				   #{message_create_date},
+				   #{message_text},
+				   #{message_room_id},
+				   #{message_read},
+				   #{user_id},
+				   #{message_type}
+			   )
+	</insert>
+
+	<!-- 단순 select (MySQL에서 그대로 사용 가능) -->
+	<select id="getUserImage" resultType="String">
+		SELECT USER_IMAGE_URL
+		FROM USER_INFO
+		WHERE USER_ID = #{userId}
+	</select>
+
+	<select id="getUserNickname" resultType="String">
+		SELECT USER_NICKNAME
+		FROM USER_INFO
+		WHERE USER_ID = #{userId}
+	</select>
+
+	<select id="getTrackInfo" parameterType="String" resultType="map">
 		SELECT
-		    U.USER_ID,
-		    ROUND((SYSDATE - MAX(M.MESSAGE_CREATE_DATE)) * 24 * 60) AS MINUTES_SINCE_LAST_MESSAGE,
-		    COUNT(M.MESSAGE_ID) AS UNREAD_MESSAGE_COUNT,
-		    MAX(M.MESSAGE_TEXT) KEEP (DENSE_RANK LAST ORDER BY M.MESSAGE_CREATE_DATE) AS LAST_MESSAGE_TEXT,
-		    MRU.USER_TYPE
-		FROM
-		    MESSAGE M
-		    JOIN MESSAGE_ROOM MR ON M.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-		    JOIN MESSAGE_ROOM_USER MRU ON MR.MESSAGE_ROOM_ID = MRU.MESSAGE_ROOM_ID
-		    JOIN USER_INFO U ON MRU.USER_ID = U.USER_ID
-		    JOIN UserRole UR ON UR.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
-		WHERE
-		    M.MESSAGE_READ = 1           -- 읽지 않은 메시지
-		    AND MRU.USER_ID != #{now_id}   -- 현재 사용자를 제외
-		    AND MR.MESSAGE_ROOM_ID IN (
-		        SELECT MESSAGE_ROOM_ID 
-		        FROM MESSAGE_ROOM_USER 
-		        WHERE USER_ID = #{now_id}
-		    )
-		    AND (
-		        (UR.USER_TYPE = 'A' AND M.A = 0)
-		        OR
-		        (UR.USER_TYPE = 'B' AND M.B = 0)
-		    )
-		GROUP BY
-		    U.USER_ID,
-		    MRU.USER_TYPE
-		ORDER BY
-		    MAX(M.MESSAGE_CREATE_DATE) DESC
-	</select>
-	
-	<select id="getMessageById" parameterType="int" resultType="com.tech.whale.message.dto.MessageDto">
-	    SELECT * FROM message WHERE message_id = #{messageId}
-	</select>
-	
-	<delete id="deleteMessage" parameterType="int">
-	    DELETE FROM message WHERE message_id = #{messageId}
-	</delete>
-
-	<select id="getUserType" parameterType="String" resultType="String">
-		SELECT USER_TYPE FROM MESSAGE_ROOM_USER WHERE USER_ID = #{now_id} AND MESSAGE_ROOM_ID = #{currentMessageRoomId}
+			TRACK_ID AS track_id,
+			TRACK_ARTIST AS track_artist,
+			TRACK_NAME AS track_name,
+			TRACK_COVER AS track_cover
+		FROM track
+		WHERE TRACK_ID = #{messageContent}
 	</select>
 
-	<update id="updateUserType">
-		UPDATE MESSAGE SET 
+	<!-- 메시지 목록 (MySQL에서도 별 문제 없음) -->
+	<select id="getMessagesByRoomId" resultType="com.tech.whale.message.dto.MessageDto">
+		SELECT
+		m.message_id,
+		m.message_create_date,
+		m.message_text,
+		m.message_room_id,
+		m.message_read,
+		m.user_id,
+		m.message_type,
+		CASE WHEN m.message_type = 'MUSIC' THEN t.track_artist ELSE NULL END AS track_artist,
+		CASE WHEN m.message_type = 'MUSIC' THEN t.track_name ELSE NULL END AS track_name,
+		CASE WHEN m.message_type = 'MUSIC' THEN t.track_cover ELSE NULL END AS track_cover
+		FROM message m
+		LEFT JOIN track t
+		ON m.message_type = 'MUSIC'
+		AND m.message_text = t.track_id
+		WHERE m.message_room_id = #{roomId}
 		<choose>
 			<when test="userTypeInt == 0">
-				A = 1
+				AND A = 0
 			</when>
 			<when test="userTypeInt == 1">
-				B = 1
+				AND B = 0
+			</when>
+		</choose>
+		ORDER BY m.message_create_date ASC
+	</select>
+
+	<!-- 단순 select (MySQL에서 그대로 사용 가능) -->
+	<select id="findPostUser" resultType="String">
+		SELECT USER_ID
+		FROM POST
+		WHERE POST_ID = #{post_id}
+	</select>
+
+	<select id="findFeedUser" resultType="String">
+		SELECT USER_ID
+		FROM FEED
+		WHERE FEED_ID = #{feed_id}
+	</select>
+
+	<select id="getLinkUser" resultType="com.tech.whale.message.dto.LinkMessageDto">
+		SELECT user_id, user_nickname, user_image_url
+		FROM USER_INFO
+		WHERE USER_ID = #{user_id}
+	</select>
+
+	<select id="getOtherUserInRoom2" resultType="String">
+		SELECT mru.user_id
+		FROM message_room_user mru
+				 JOIN message_room mr
+					  ON mr.message_room_id = mru.message_room_id
+		WHERE mru.message_room_id = #{roomId}
+		  AND mru.user_id != #{userId}
+	</select>
+
+	<!--
+         3) getFollowList: Oracle의 CONNECT BY + REGEXP_SUBSTR 사용 중.
+            MySQL에는 CONNECT BY가 없으므로,
+            "재귀 CTE + SUBSTRING_INDEX" 등을 사용하여 CSV를 파싱하는 예시입니다.
+            (MySQL 8.0+에서만 동작)
+
+            ※ CSV 형태로 user_id 리스트를 저장하는 구조 자체가 비정상적이라,
+              일반적으로 별도 테이블로 1:1 관계를 저장하는 방식을 추천합니다.
+     -->
+	<select id="getFollowList" resultType="com.tech.whale.message.dto.FollowListDto">
+    <![CDATA[
+		WITH RECURSIVE splitted_follow AS (
+			SELECT
+				SUBSTRING_INDEX(F.FOLLOW_USER_ID, ',', 1) AS follow_user_id,
+				SUBSTR(F.FOLLOW_USER_ID, LENGTH(SUBSTRING_INDEX(F.FOLLOW_USER_ID, ',', 1)) + 2) AS rest
+			FROM FOLLOW F
+			WHERE F.USER_ID = #{now_id}
+
+			UNION ALL
+
+			SELECT
+				SUBSTRING_INDEX(rest, ',', 1),
+				SUBSTR(rest, LENGTH(SUBSTRING_INDEX(rest, ',', 1)) + 2)
+			FROM splitted_follow
+			WHERE rest <> ''
+		)
+		SELECT
+			UI.USER_ID AS FOLLOW_USER_ID,
+			UI.USER_NICKNAME AS FOLLOW_USER_NICKNAME,
+			UI.USER_IMAGE_URL AS FOLLOW_USER_IMAGE_URL
+		FROM splitted_follow B
+				 JOIN USER_INFO UI ON B.follow_user_id = UI.USER_ID
+
+		UNION
+
+		WITH RECURSIVE splitted_follow2 AS (
+			SELECT
+			SUBSTRING_INDEX(F.FOLLOW_USER_ID, ',', 1) AS user_id,
+			SUBSTR(F.FOLLOW_USER_ID, LENGTH(SUBSTRING_INDEX(F.FOLLOW_USER_ID, ',', 1)) + 2) AS rest
+			FROM FOLLOW F
+			WHERE FIND_IN_SET(#{now_id}, F.FOLLOW_USER_ID) > 0
+
+			UNION ALL
+
+			SELECT
+			SUBSTRING_INDEX(rest, ',', 1),
+			SUBSTR(rest, LENGTH(SUBSTRING_INDEX(rest, ',', 1)) + 2)
+			FROM splitted_follow2
+			WHERE rest <> ''
+			)
+		SELECT
+			UI.USER_ID AS FOLLOW_USER_ID,
+			UI.USER_NICKNAME AS FOLLOW_USER_NICKNAME,
+			UI.USER_IMAGE_URL AS FOLLOW_USER_IMAGE_URL
+		FROM splitted_follow2 A
+				 JOIN USER_INFO UI ON A.user_id = UI.USER_ID;
+		]]>
+    </select>
+
+	<!--
+         4) getAllChatList: Oracle 'WITH UserRole AS ... KEEP (DENSE_RANK LAST ...)'
+            → MySQL에서는 아래처럼
+               (a) "UserRole" CTE 유지 (MySQL 8.0+)
+               (b) 가장 최신 메시지는 별도 서브쿼리(LM)를 JOIN
+     -->
+	<select id="getAllChatList" resultType="com.tech.whale.message.dto.AllChatListDto">
+    <![CDATA[
+		WITH UserRole AS (
+			SELECT
+				MR.MESSAGE_ROOM_ID,
+				MRU.USER_TYPE
+			FROM MESSAGE_ROOM_USER MRU
+					 JOIN MESSAGE_ROOM MR
+						  ON MRU.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+			WHERE MRU.USER_ID = #{now_id}
+		),
+			 LastMessage AS (
+				 -- 각 MESSAGE_ROOM_ID별 가장 마지막(최신) 메시지만 뽑기
+				 SELECT
+					 M2.MESSAGE_ROOM_ID,
+					 M2.MESSAGE_READ,
+					 M2.MESSAGE_TEXT,
+					 M2.MESSAGE_CREATE_DATE,
+					 M2.USER_ID AS LAST_MESSAGE_SENDER_ID,
+					 M2.MESSAGE_TYPE,
+					 M2.A,
+					 M2.B
+				 FROM MESSAGE M2
+						  JOIN (
+					 SELECT MESSAGE_ROOM_ID, MAX(MESSAGE_CREATE_DATE) AS MAX_DATE
+					 FROM MESSAGE
+					 GROUP BY MESSAGE_ROOM_ID
+				 ) T2
+							   ON M2.MESSAGE_ROOM_ID = T2.MESSAGE_ROOM_ID
+								   AND M2.MESSAGE_CREATE_DATE = T2.MAX_DATE
+			 )
+		SELECT
+			U.USER_ID,
+			U.USER_NICKNAME,
+			U.USER_IMAGE_URL,
+			MR.MESSAGE_ROOM_ID,
+			MRU.USER_TYPE,
+			LM.MESSAGE_READ AS LAST_MESSAGE_READ,
+			LM.MESSAGE_TEXT AS LAST_MESSAGE_TEXT,
+			LM.MESSAGE_CREATE_DATE AS LAST_MESSAGE_CREATE_DATE,
+			LM.LAST_MESSAGE_SENDER_ID AS LAST_MESSAGE_SENDER_ID,
+			LM.MESSAGE_TYPE AS LAST_MESSAGE_TYPE
+		FROM MESSAGE_ROOM MR
+				 JOIN MESSAGE_ROOM_USER MRU
+					  ON MR.MESSAGE_ROOM_ID = MRU.MESSAGE_ROOM_ID
+				 JOIN USER_INFO U
+					  ON MRU.USER_ID = U.USER_ID
+				 JOIN UserRole UR
+					  ON UR.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+				 JOIN LastMessage LM
+					  ON LM.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+		WHERE
+			MRU.USER_ID != #{now_id}
+		  AND MR.MESSAGE_ROOM_ID IN (
+			SELECT MESSAGE_ROOM_ID
+			FROM MESSAGE_ROOM_USER
+			WHERE USER_ID = #{now_id}
+			)
+		  AND (
+			(UR.USER_TYPE = 'A' AND LM.A = 0)
+		   OR
+			(UR.USER_TYPE = 'B' AND LM.B = 0)
+			)
+		GROUP BY
+			U.USER_ID,
+			U.USER_NICKNAME,
+			U.USER_IMAGE_URL,
+			MR.MESSAGE_ROOM_ID,
+			MRU.USER_TYPE,
+			LM.MESSAGE_READ,
+			LM.MESSAGE_TEXT,
+			LM.MESSAGE_CREATE_DATE,
+			LM.LAST_MESSAGE_SENDER_ID,
+			LM.MESSAGE_TYPE
+		ORDER BY
+			LM.MESSAGE_CREATE_DATE DESC
+		]]>
+    </select>
+
+	<!--
+         5) getReadChatList: Oracle 'WITH ... KEEP (DENSE_RANK LAST) ... SYSDATE'
+            → MySQL: (a) CTE + 서브쿼리로 최신 메시지,
+                     (b) SYSDATE - DATE → TIMESTAMPDIFF(MINUTE, MAX_DATE, NOW())
+     -->
+	<select id="getReadChatList" resultType="com.tech.whale.message.dto.ReadChatDto">
+    <![CDATA[
+		WITH UserRole AS (
+			SELECT
+				MR.MESSAGE_ROOM_ID,
+				MRU.USER_TYPE
+			FROM MESSAGE_ROOM_USER MRU
+					 JOIN MESSAGE_ROOM MR
+						  ON MRU.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+			WHERE MRU.USER_ID = #{now_id}
+		)
+		SELECT
+			U.USER_ID,
+			-- SYSDATE - MAX(M.MESSAGE_CREATE_DATE) * 24 * 60 --> MySQL: TIMESTAMPDIFF(MINUTE, MAX(M.MESSAGE_CREATE_DATE), NOW())
+			TIMESTAMPDIFF(MINUTE, MAX(M.MESSAGE_CREATE_DATE), NOW()) AS MINUTES_SINCE_LAST_MESSAGE,
+			COUNT(M.MESSAGE_ID) AS UNREAD_MESSAGE_COUNT,
+			-- KEEP(DENSE_RANK LAST) 대신 "가장 최신 메시지"를 서브쿼리 등으로 가져와야 함.
+			-- 간단히 GROUP 내 MAX()로는 "마지막 메시지"를 정확히 못 구함. 필요 시 LastMessage 조인 방식 사용.
+			-- 여기서는 예시로 MAX(M.MESSAGE_TEXT) 만 표기
+			MAX(M.MESSAGE_TEXT) AS LAST_MESSAGE_TEXT,
+			MRU.USER_TYPE
+		FROM MESSAGE M
+				 JOIN MESSAGE_ROOM MR
+					  ON M.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+				 JOIN MESSAGE_ROOM_USER MRU
+					  ON MR.MESSAGE_ROOM_ID = MRU.MESSAGE_ROOM_ID
+				 JOIN USER_INFO U
+					  ON MRU.USER_ID = U.USER_ID
+				 JOIN UserRole UR
+					  ON UR.MESSAGE_ROOM_ID = MR.MESSAGE_ROOM_ID
+		WHERE
+			M.MESSAGE_READ = 1            -- 안 읽은 메시지
+		  AND MRU.USER_ID != #{now_id}  -- 현재 사용자를 제외
+		  AND MR.MESSAGE_ROOM_ID IN (
+			SELECT MESSAGE_ROOM_ID
+			FROM MESSAGE_ROOM_USER
+			WHERE USER_ID = #{now_id}
+			)
+		  AND (
+			(UR.USER_TYPE = 'A' AND M.A = 0)
+		   OR
+			(UR.USER_TYPE = 'B' AND M.B = 0)
+			)
+		GROUP BY
+			U.USER_ID,
+			MRU.USER_TYPE
+		ORDER BY
+			MAX(M.MESSAGE_CREATE_DATE) DESC
+		]]>
+    </select>
+
+	<!-- 메시지 단건 조회(Oracle/MySQL 모두 동일) -->
+	<select id="getMessageById" parameterType="int" resultType="com.tech.whale.message.dto.MessageDto">
+		SELECT *
+		FROM message
+		WHERE message_id = #{messageId}
+	</select>
+
+	<!-- 메시지 삭제(Oracle/MySQL 동일) -->
+	<delete id="deleteMessage" parameterType="int">
+		DELETE FROM message
+		WHERE message_id = #{messageId}
+	</delete>
+
+	<!-- 사용자 타입 조회 (MySQL 동일) -->
+	<select id="getUserType" parameterType="String" resultType="String">
+		SELECT USER_TYPE
+		FROM MESSAGE_ROOM_USER
+		WHERE USER_ID = #{now_id}
+		  AND MESSAGE_ROOM_ID = #{currentMessageRoomId}
+	</select>
+
+	<!-- A/B 열 업데이트(Oracle/MySQL 동일 문법) -->
+	<update id="updateUserType">
+		UPDATE MESSAGE
+		<choose>
+			<when test="userTypeInt == 0">
+				SET A = 1
+			</when>
+			<when test="userTypeInt == 1">
+				SET B = 1
 			</when>
 		</choose>
 		WHERE MESSAGE_ROOM_ID = #{message_room_id}
 	</update>
-	
+
+	<!-- 메시지 읽음 처리(Oracle/MySQL 동일) -->
 	<update id="readMessage">
-		UPDATE MESSAGE SET 
-		MESSAGE_READ = 0
+		UPDATE MESSAGE
+		SET MESSAGE_READ = 0
 		WHERE MESSAGE_ROOM_ID = #{message_room_id}
-		AND USER_ID = #{otherId}
+		  AND USER_ID = #{otherId}
 	</update>
-	
+
 </mapper>

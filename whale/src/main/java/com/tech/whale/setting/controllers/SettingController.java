@@ -2,15 +2,14 @@ package com.tech.whale.setting.controllers;
 
 import java.util.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.tech.whale.login.dao.UserDao;
 import com.tech.whale.main.models.MainDao;
 import com.tech.whale.main.service.MainService;
 import com.tech.whale.setting.dto.*;
+import com.tech.whale.setting.service.SettingService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,13 +20,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.tech.whale.setting.dao.ReportDao;
-import com.tech.whale.setting.dao.SettingDao;
 import com.tech.whale.streaming.service.StreamingService;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class SettingController {
-
     UserInfoDto userinfoDto;
     StartpageDto startpageDto;
     UserSettingDto userSettingDto;
@@ -35,44 +31,49 @@ public class SettingController {
     PageAccessDto pageAccessDto;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Autowired
-    private MainService mainService;
+    private final MainService mainService;
+    private final StreamingService streamingService;
+    private final ReportDao reportDao;
+    private final SettingService settingService;
+    private final UserDao userDao;
+    private final MainDao mainDao;
+    private final JdbcTemplate jdbcTemplate;
 
-    // [ 스트리밍 검색 기능 ]
+    // 생성자를 통한 의존성 주입
     @Autowired
-    private StreamingService streamingService;
+    public SettingController(MainService mainService, StreamingService streamingService, ReportDao reportDao,
+                             SettingService settingService, UserDao userDao, MainDao mainDao, JdbcTemplate jdbcTemplate) {
+        this.mainService = mainService;
+        this.streamingService = streamingService;
+        this.reportDao = reportDao;
+        this.settingService = settingService;
+        this.userDao = userDao;
+        this.mainDao = mainDao;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
-    @RequestMapping("/settingHome")
-    public String settingHome(HttpServletRequest request, HttpSession session, Model model) {
+    @GetMapping("/settingHome")
+    public String settingHome() {
         System.out.println("settingHome() ctr");
 
         return "setting/settingHome";
     }
 
-    @Autowired
-    private SettingDao settingDao;
-
-    @Autowired
-    private ReportDao reportDao;
-
-    @RequestMapping("/profileEdit")
-    public String profileEdit(HttpServletRequest request, HttpSession session, Model model) {
+    @GetMapping("/profileEdit")
+    public String profileEdit(HttpSession session, Model model) {
         System.out.println("profileEdit() ctr");
-
         // 세션에서 가져온 user_id 저장
         String session_user_id = (String) session.getAttribute("user_id");
 
         // user_id의 정보 가져오기
-        userinfoDto = settingDao.getProfile(session_user_id);
-
-        // model에 저장
-        model.addAttribute("profile", userinfoDto);
+        UserInfoDto userinfoDto = settingService.profile(session_user_id);
+        model.addAttribute("profile", userinfoDto); // model에 저장
 
         return "setting/profileEdit";
     }
 
-    @RequestMapping("/updatePassword")
-    public String updatePassword(HttpServletRequest request, HttpSession session, Model model) {
+    @GetMapping("/updatePassword")
+    public String updatePassword() {
         System.out.println("updatePassword() ctr");
 
         return "setting/updatePassword";
@@ -82,27 +83,19 @@ public class SettingController {
     @ResponseBody
     public Map<String, String> checkCurrentPassword(@RequestParam("current_password") String currentPassword, HttpSession session) {
         System.out.println("checkCurrentPassword() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
-        // 사용자의 현재 비밀번호 가져오기
-        String dbPassword = settingDao.getCurrentPassword(session_user_id);
+        // 사용자의 현재 비밀번호 가져오기 위해 service 호출
+        String dbPassword = settingService.currentPassword(session_user_id);
 
-        Map<String, String> response = new HashMap<>(); // 응답 데이터 저장할 Map 객체 생성(key-value)
-
-        // passwordEncoder.matches()를 사용해 입력한 비밀번호(currentPassword)를 암호화해 DB에 저장된 비밀번호(dbPassword)와 비교
-        if (passwordEncoder.matches(currentPassword, dbPassword)) {
-            response.put("status", "valid");
-        } else {
-            response.put("status", "invalid");
-        }
+        Map<String, String> response = settingService.compare(currentPassword, dbPassword);
 
         return response; // json 형태로 전달
     }
 
     @PostMapping("/updateNewPassword")
     @ResponseBody
-    public ResponseEntity<Map<String, String>> updateNewPassword(@RequestParam("new_password") String newPassword, HttpSession session) {
+    public Map<String, String> updateNewPassword(@RequestParam("new_password") String newPassword, HttpSession session) {
         System.out.println("updateNewPassword() ctr");
 
         String session_user_id = (String) session.getAttribute("user_id");
@@ -110,32 +103,32 @@ public class SettingController {
 
         Map<String, String> response = new HashMap<>(); // Map 객체 생성
 
-        settingDao.updatePassword(session_user_id, encodedPassword); // 암호화된 새로운 비밀번호 업데이트
+        settingService.updatePassword(session_user_id, encodedPassword);
         response.put("status", "success");
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return response;
     }
 
     @PostMapping("/updateProfile")
-    public String updateProfile(@RequestParam("user_nickname") String nickname, @RequestParam("user_email") String email, @RequestParam(value = "user_profile_image_url", required = false) String userProfileImageUrl, HttpSession session) {
+    public String updateProfile(@RequestParam("user_nickname") String nickname, @RequestParam("user_email") String email,
+                                @RequestParam(value = "user_profile_image_url", required = false) String userProfileImageUrl,
+                                HttpSession session) {
         System.out.println("updateProfile() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 프로필 이미지를 변경하지 않은 경우 DB에 저장된 url 값을 가져오기
         if (userProfileImageUrl == null || userProfileImageUrl.isEmpty()) {
-            userProfileImageUrl = settingDao.getCurrentProfileImage(session_user_id);
+            userProfileImageUrl = settingService.currentProfileImage(session_user_id);
         }
 
         // DB에 변경한 프로필 정보 업데이트
-        settingDao.updateProfile(nickname, email, userProfileImageUrl, session_user_id);
-        System.out.println("DB 업데이트 완료");
+        settingService.updateProfile(nickname, email, userProfileImageUrl, session_user_id);
 
         return "redirect:/profileEdit"; // profileEdit 페이지로 리다이렉트
     }
 
-    @RequestMapping("/representiveSong")
-    public String representiveSong(HttpSession session, Model model) {
+    @GetMapping("/representiveSong")
+    public String representiveSong() {
         System.out.println("representiceSong() ctr");
 
         return "setting/representiveSong";
@@ -143,9 +136,7 @@ public class SettingController {
 
     @PostMapping(value = "/updateRepresentive", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateRepresentive(@RequestBody HashMap<String, Object> map, HttpSession session) {
-        // 클라이언트가 보낸 데이터를 HashMap으로 받음
         System.out.println("updateRepresentive() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 스트리밍 검색 기능
@@ -158,17 +149,14 @@ public class SettingController {
 
         // selectTrackIdService 메소드 호출해서 trackId 가져오기
         String trackId = streamingService.selectTrackIdService(trackSpotifyId, artistName, trackName, albumName, albumCover);
-        System.out.println(trackId);
-
-        settingDao.updateRepresentiveSong(session_user_id, trackId); // user_info 테이블의 representivesong 필드에 trackId 업데이트
-        System.out.println("대표곡 업데이트 완료");
+        settingService.updateSong(session_user_id, trackId);
 
         // 성공 응답 반환
         return ResponseEntity.ok().build();
     }
 
-    @RequestMapping("/account")
-    public String account(HttpSession session, Model model) {
+    @GetMapping("/account")
+    public String account() {
         System.out.println("account() ctr");
 
         return "setting/account";
@@ -177,12 +165,10 @@ public class SettingController {
     @RequestMapping("/accountPrivacy")
     public String accountPrivacy(HttpSession session, Model model) {
         System.out.println("accountPrivacy() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 비공개 계정 설정 값 가져오기
-        userSettingDto = settingDao.getAccountPrivacyByUserId(session_user_id);
-
+        userSettingDto = settingService.accountPrivacy(session_user_id);
         model.addAttribute("accountPrivacyOn", userSettingDto.getAccount_privacy());
 
         return "setting/accountPrivacy";
@@ -190,12 +176,11 @@ public class SettingController {
 
     @RequestMapping(value = "/privateFollowNoti", method = RequestMethod.POST)
     @ResponseBody
-    public String privateFollowNoti(HttpSession session, Model model) {
+    public String privateFollowNoti(HttpSession session) {
         System.out.println("privateFollowNoti() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
-        List<String> followList = settingDao.getFollowRequestList(session_user_id); // follow_noti 테이블에서 팔로우 요청 보낸 사람 리스트 가져오기
+        List<String> followList = settingService.followRequestList(session_user_id); // follow_noti 테이블에서 팔로우 요청 보낸 사람 리스트 가져오기
 
         // 비공개 계정에서 공개로 전환할 때, 기존에 사용자에게 팔로우 수락 요청을 보낸 사람이 있을 경우
         // 1. 사용자 팔로워에 상대방 추가
@@ -213,10 +198,9 @@ public class SettingController {
     @ResponseBody
     public String updatePrivacy(@RequestParam("account_privacy") int accountPrivacy, HttpSession session) {
         System.out.println("updatePrivacy() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
-        settingDao.updateAccountPrivacy(session_user_id, accountPrivacy); // 비공개 계정 여부 DB 업데이트
+        settingService.updateAccountPrivacy(session_user_id, accountPrivacy); // 비공개 계정 여부 DB 업데이트
 
         return "success";
     }
@@ -224,19 +208,18 @@ public class SettingController {
     @RequestMapping("/hiddenFeed")
     public String hiddenFeed(HttpSession session, Model model) {
         System.out.println("hiddenFeed() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 숨긴 피드 가져오기
-        List<HiddenFeedDto> hiddenFeedList = settingDao.getHiddenFeedList(session_user_id); 
+        List<HiddenFeedDto> hiddenFeedList = settingService.hiddenFeedList(session_user_id);
 
         model.addAttribute("hiddenFeedList", hiddenFeedList);
 
         return "setting/hiddenFeed";
     }
 
-    @RequestMapping("/activity")
-    public String activity(HttpSession session, Model model) {
+    @GetMapping("/activity")
+    public String activity() {
         System.out.println("activity() ctr");
 
         return "setting/activity";
@@ -245,12 +228,11 @@ public class SettingController {
     @RequestMapping("/likeList")
     public String likeList(@RequestParam(defaultValue = "최신순") String sortOrder, @RequestParam(defaultValue = "게시글") String postType, HttpSession session, Model model) {
         System.out.println("likeList() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         String orderBy = sortOrder.equals("최신순") ? "DESC" : "ASC";
 
-        List<LikeListDto> postLikeList = settingDao.getFilteredPostLikeList(session_user_id, orderBy, postType);
+        List<LikeListDto> postLikeList = settingService.filteredPostLikeList(session_user_id, orderBy, postType);
 
         model.addAttribute("postLikeList", postLikeList);
         model.addAttribute("selectedSortOrder", sortOrder);
@@ -262,13 +244,12 @@ public class SettingController {
     @RequestMapping("/commentList")
     public String commentList(@RequestParam(defaultValue = "최신순") String sortOrder, @RequestParam(defaultValue = "게시글") String postType, HttpSession session, Model model) {
         System.out.println("commentList() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         String orderBy = sortOrder.equals("최신순") ? "DESC" : "ASC";
 
-        List<CommentListDto> postFeedList = settingDao.getFilteredPostCommentList(session_user_id, orderBy, postType); // 글 정보와 댓글 정보
-        List<CommentListDto> postFeedCommentList = settingDao.getFilteredPostReplyCommentList(session_user_id, orderBy, postType); // 답글 정보
+        List<CommentListDto> postFeedList = settingService.filteredPostCommentList(session_user_id, orderBy, postType); // 글 정보와 댓글 정보
+        List<CommentListDto> postFeedCommentList = settingService.filteredPostReplyCommentList(session_user_id, orderBy, postType); // 답글 정보
 
         // 게시글과 피드 ID를 각각 중복 없이 저장할 Set 생성
         Set<Integer> uniquePostIds = new HashSet<>(); // 게시글 ID를 저장하는 Set
@@ -283,8 +264,8 @@ public class SettingController {
             // 중복되지 않은 게시글 데이터를 결과 리스트에 추가
             if ("게시글".equals(postType) && uniquePostIds.add(dto.getPost_id())) {
                 filteredPostFeedCommentList.add(dto);
-            // 현재 선택된 postType이 피드이고, Set(uniqueFeedIds)에 현재 피드 ID(dto.getFeed_id())를 추가했을 때 중복이 아니라면
-            // 중복되지 않은 피드 데이터를 결과 리스트에 추가
+                // 현재 선택된 postType이 피드이고, Set(uniqueFeedIds)에 현재 피드 ID(dto.getFeed_id())를 추가했을 때 중복이 아니라면
+                // 중복되지 않은 피드 데이터를 결과 리스트에 추가
             } else if ("피드".equals(postType) && uniqueFeedIds.add(dto.getFeed_id())) {
                 filteredPostFeedCommentList.add(dto);
             }
@@ -301,11 +282,10 @@ public class SettingController {
     @RequestMapping("/notification")
     public String notification(HttpSession session, Model model) {
         System.out.println("notification() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에 저장된 알림 상태 가져오기
-        userNotificationDto = settingDao.getNotificationSettingsByUserId(session_user_id);
+        userNotificationDto = settingService.notificationSetting(session_user_id);
 
         model.addAttribute("allNotificationOff", userNotificationDto.getAll_notification_off());
         model.addAttribute("likeNotificationOn", userNotificationDto.getLike_notification_onoff());
@@ -319,11 +299,9 @@ public class SettingController {
     @ResponseBody
     public String updateNotifications(@RequestParam("all_notification_off") int allNotificationOff, @RequestParam("like_notification_onoff") int likeNotificationOnoff, @RequestParam("comment_notification_onoff") int commentNotificationOnoff, @RequestParam("message_notification_onoff") int messageNotificationOnoff, HttpSession session) {
         System.out.println("updateNotifications() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
-        settingDao.updateNotificationSettings(session_user_id, allNotificationOff, likeNotificationOnoff, commentNotificationOnoff, messageNotificationOnoff);
-        System.out.println("DB 업데이트 성공");
+        settingService.updateNotificationSetting(session_user_id, allNotificationOff, likeNotificationOnoff, commentNotificationOnoff, messageNotificationOnoff);
 
         return "success";
     }
@@ -333,18 +311,17 @@ public class SettingController {
     public String updateIndividualNotification(@RequestParam("like_notification_onoff") Optional<Integer> likeNotificationOnOff, @RequestParam("comment_notification_onoff") Optional<Integer> commentNotificationOnOff, @RequestParam("message_notification_onoff") Optional<Integer> messageNotificationOnOff, HttpSession session) {
         // 각각의 매개변수를 Optional<Integer> 타입으로 전달
         System.out.println("updateIndividualNotification() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 각 알림 상태에 따라 DB 업데이트 처리
         if (likeNotificationOnOff.isPresent()) { // isPresent()를 사용해 값이 있는지 여부를 확인(값이 존재하면 true, 값이 없으면 false)
-            settingDao.updateLikeNotification(session_user_id, likeNotificationOnOff.get()); // get()으로 값을 꺼내서 사용
+            settingService.updateLikeNotification(session_user_id, likeNotificationOnOff);
         }
         if (commentNotificationOnOff.isPresent()) {
-            settingDao.updateCommentNotification(session_user_id, commentNotificationOnOff.get());
+            settingService.updateCommentNotification(session_user_id, commentNotificationOnOff);
         }
         if (messageNotificationOnOff.isPresent()) {
-            settingDao.updateMessageNotification(session_user_id, messageNotificationOnOff.get());
+            settingService.updateMessageNotification(session_user_id, messageNotificationOnOff);
         }
 
         return "success";
@@ -353,11 +330,10 @@ public class SettingController {
     @RequestMapping("/accessibility")
     public String accessibility(HttpSession session, Model model) {
         System.out.println("accessibility() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에서 다크모드 설정 값 가져오기
-        userSettingDto = settingDao.getDarkmode(session_user_id);
+        userSettingDto = settingService.darkmode(session_user_id);
 
         model.addAttribute("darkmodeOn", userSettingDto.getDarkmode_setting_onoff());
 
@@ -368,12 +344,10 @@ public class SettingController {
     @ResponseBody
     public String updateDarkmode(@RequestParam("darkmode_setting_onoff") int darkmodeOn, HttpSession session) {
         System.out.println("updateDarkmode() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에 다크모드 설정 값 업데이트
-        settingDao.updateDarkmode(session_user_id, darkmodeOn);
-        System.out.println("DB 업데이트 성공");
+        settingService.updateDarkmode(session_user_id, darkmodeOn);
 
         return "success";
     }
@@ -381,10 +355,9 @@ public class SettingController {
     @RequestMapping("/startpageSetting")
     public String startpageSetting(HttpSession session, Model model) {
         System.out.println("startpageSetting() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
-        startpageDto = settingDao.getStartpageSetting(session_user_id);
+        startpageDto = settingService.startpageSetting(session_user_id);
 
         model.addAttribute("music", startpageDto.getStartpage_music_setting());
         model.addAttribute("feed", startpageDto.getStartpage_feed_setting());
@@ -396,36 +369,22 @@ public class SettingController {
 
     @PostMapping("/updateStartpageSetting")
     @ResponseBody
-    public ResponseEntity<Map<String, String>> updateStartpageSetting(@RequestBody Map<String, String> request, @SessionAttribute("user_id") String userId) {
+    public void updateStartpageSetting(@RequestBody Map<String, String> request, @SessionAttribute("user_id") String session_user_id) {
         System.out.println("updateStartpageSetting() ctr");
 
         String left = request.get("left"); // 클라이언트에서 보낸 json 데이터에서 left 키의 값을 가져오기
         String right = request.get("right"); // 클라이언트에서 보낸 json 데이터에서 right 키의 값을 가져오기
 
-        try {
-            // 선택된 값에 따라 DB 업데이트
-            settingDao.updateStartpageSetting(userId, left, right);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "업데이트 성공");
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "업데이트 실패");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        settingService.updateStartpageSetting(session_user_id, left, right);
     }
 
     @RequestMapping("/pageAccessSetting")
     public String pageAccessSetting(HttpSession session, Model model) {
         System.out.println("pageAccessSetting() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에서 페이지 접근 설정 값 가져오기
-        pageAccessDto = settingDao.getPageAccessSetting(session_user_id);
+        pageAccessDto = settingService.pageAccessSetting(session_user_id);
 
         model.addAttribute("mypage", pageAccessDto.getPage_access_mypage());
         model.addAttribute("notification", pageAccessDto.getPage_access_notification());
@@ -438,26 +397,14 @@ public class SettingController {
 
     @PostMapping("/updatePageAccessSetting")
     @ResponseBody
-    public ResponseEntity<Map<String, String>> updatePageAccessSetting(@RequestParam("settingType") String settingType, @RequestParam("selectedValue") String selectedValue, @SessionAttribute("user_id") String userId) {
+    public void updatePageAccessSetting(@RequestParam("settingType") String settingType, @RequestParam("selectedValue") String selectedValue, @SessionAttribute("user_id") String session_user_id) {
         System.out.println("updatePageAccessSetting() ctr");
 
-        try {
-            settingDao.updatePageAccessSetting(userId, settingType, selectedValue);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "업데이트 성공");
-            return new ResponseEntity<>(response, HttpStatus.OK);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "업데이트 실패");
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        settingService.updatePageAccessSetting(session_user_id, settingType, selectedValue);
     }
 
     @RequestMapping("/report")
-    public String report(HttpServletRequest request, HttpSession session, Model model,
+    public String report(HttpSession session, Model model,
                          @RequestParam(value = "p", required = false) String post_id,
                          @RequestParam(value = "f", required = false) String feed_id,
                          @RequestParam(value = "fc", required = false) String feed_comments_id,
@@ -466,28 +413,28 @@ public class SettingController {
         String now_id = (String) session.getAttribute("user_id");
         String report_tag = "";
         String userId = "";
-        
+
         if (post_id != null) {
             report_tag = "게시글 신고";
             userId = reportDao.getPostUser(post_id);
             model.addAttribute("report_type_id", post_id);
         } else if (feed_id != null) {
-        	userId = reportDao.getFeedUser(feed_id);
+            userId = reportDao.getFeedUser(feed_id);
             report_tag = "피드 신고";
             model.addAttribute("report_type_id", feed_id);
         } else if (feed_comments_id != null) {
-        	userId = reportDao.getFeedCommentsUser(feed_comments_id);
+            userId = reportDao.getFeedCommentsUser(feed_comments_id);
             report_tag = "피드 댓글 신고";
             model.addAttribute("report_type_id", feed_comments_id);
         } else if (post_comments_id != null) {
-			userId = reportDao.getPostCommentsUser(post_comments_id);
-			report_tag = "게시글 댓글 신고";
-			model.addAttribute("report_type_id", post_comments_id);
-		} else if (message_id != null) {
-			userId = reportDao.getMessageUser(message_id);
-			report_tag = "메시지 신고";
-			model.addAttribute("report_type_id", message_id);
-		}
+            userId = reportDao.getPostCommentsUser(post_comments_id);
+            report_tag = "게시글 댓글 신고";
+            model.addAttribute("report_type_id", post_comments_id);
+        } else if (message_id != null) {
+            userId = reportDao.getMessageUser(message_id);
+            report_tag = "메시지 신고";
+            model.addAttribute("report_type_id", message_id);
+        }
 
         model.addAttribute("userId", userId);
         model.addAttribute("report_tag", report_tag);
@@ -496,8 +443,7 @@ public class SettingController {
     }
 
     @RequestMapping("/reportDo")
-    public String reportDo(HttpServletRequest request, Model model,
-                           HttpSession session,
+    public String reportDo(HttpSession session,
                            @RequestParam("now_id") String now_id,
                            @RequestParam("report_tag") String report_tag,
                            @RequestParam("report_type_id") String report_type_id,
@@ -521,23 +467,22 @@ public class SettingController {
             reportText = reportDto.getReport_text();
             reportDao.reportFeedComments(report_type_id, now_id, report_why, report_tag, reportText, userId);
         } else if (report_tag.equals("게시글 댓글 신고")) {
-        	ReportDto reportDto = reportDao.getReportPostComments(report_type_id);
-			reportText = reportDto.getReport_text();
-			reportDao.reportPostComments(report_type_id, now_id, report_why, report_tag, reportText, userId);
-		} else if (report_tag.equals("메시지 신고")) {
-			ReportDto reportDto = reportDao.getReportMessage(report_type_id);
-			reportText = reportDto.getReport_text();
-			reportDao.reportMessage(report_type_id, now_id, report_why, report_tag, reportText, userId);
-			
-		}
+            ReportDto reportDto = reportDao.getReportPostComments(report_type_id);
+            reportText = reportDto.getReport_text();
+            reportDao.reportPostComments(report_type_id, now_id, report_why, report_tag, reportText, userId);
+        } else if (report_tag.equals("메시지 신고")) {
+            ReportDto reportDto = reportDao.getReportMessage(report_type_id);
+            reportText = reportDto.getReport_text();
+            reportDao.reportMessage(report_type_id, now_id, report_why, report_tag, reportText, userId);
+
+        }
 
         return "redirect:/profileHome?u="+(String) session.getAttribute("user_id");
     }
 
     @RequestMapping("/deleteAccount")
-    public String deleteAccount(HttpServletRequest request, HttpSession session, Model model) {
+    public String deleteAccount(HttpSession session) {
         System.out.println("deleteAccount ctr()");
-
         String session_user_id = (String) session.getAttribute("user_id");
 
         if (session_user_id == null) {
@@ -547,16 +492,10 @@ public class SettingController {
         return "setting/deleteAccount";
     }
 
-    @Autowired
-    private UserDao userDao;
-    @Autowired
-    private MainDao mainDao;
-
     @PostMapping("/deleteAccountMethod")
     @Transactional
     public String deleteAccountMethod(HttpSession session, @RequestParam("password") String password, Model model) {
         System.out.println("deleteAccountMethod ctr()");
-
         String sessionUserId = (String) session.getAttribute("user_id");
 
         // session에 아이디가 없을 경우
@@ -596,15 +535,12 @@ public class SettingController {
         }
     }
 
-    @RequestMapping("/deleteAccountResult")
+    @GetMapping("/deleteAccountResult")
     public String deleteAccountResult() {
         System.out.println("deleteAccountResult ctr()");
 
         return "setting/deleteAccountResult";
     }
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @Transactional
     public void deleteUserAndUpdateReferences(String userId) {
@@ -658,5 +594,4 @@ public class SettingController {
             e.printStackTrace();
         }
     }
-
 }
