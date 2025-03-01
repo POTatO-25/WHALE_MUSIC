@@ -75,10 +75,10 @@ public class SettingService {
         System.out.println("대표곡 업데이트 완료");
     }
 
-    public UserSettingDto accountPrivacy(String session_user_id) {
-        userSettingDto = settingDao.getAccountPrivacyByUserId(session_user_id);
+    public int accountPrivacy(String session_user_id) {
+        int accountPrivacy = settingDao.getAccountPrivacyByUserId(session_user_id);
 
-        return userSettingDto;
+        return accountPrivacy;
     }
 
     public List<String> followRequestList(String session_user_id) {

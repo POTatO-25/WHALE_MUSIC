@@ -90,15 +90,15 @@ public class SettingController {
 
         Map<String, String> response = settingService.compare(currentPassword, dbPassword);
 
-        return response; // json 형태로 전달
+        return response;
     }
 
     @PostMapping("/updateNewPassword")
     @ResponseBody
     public Map<String, String> updateNewPassword(@RequestParam("new_password") String newPassword, HttpSession session) {
         System.out.println("updateNewPassword() ctr");
-
         String session_user_id = (String) session.getAttribute("user_id");
+
         String encodedPassword = passwordEncoder.encode(newPassword); // encode()를 사용해 입력된 비밀번호를 해싱 처리
 
         Map<String, String> response = new HashMap<>(); // Map 객체 생성
@@ -162,19 +162,19 @@ public class SettingController {
         return "setting/account";
     }
 
-    @RequestMapping("/accountPrivacy")
+    @GetMapping("/accountPrivacy")
     public String accountPrivacy(HttpSession session, Model model) {
         System.out.println("accountPrivacy() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 비공개 계정 설정 값 가져오기
-        userSettingDto = settingService.accountPrivacy(session_user_id);
-        model.addAttribute("accountPrivacyOn", userSettingDto.getAccount_privacy());
+        int accountPrivacy = settingService.accountPrivacy(session_user_id);
+        model.addAttribute("accountPrivacyOn", accountPrivacy);
 
         return "setting/accountPrivacy";
     }
 
-    @RequestMapping(value = "/privateFollowNoti", method = RequestMethod.POST)
+    @PostMapping
     @ResponseBody
     public String privateFollowNoti(HttpSession session) {
         System.out.println("privateFollowNoti() ctr");
@@ -186,7 +186,7 @@ public class SettingController {
         // 1. 사용자 팔로워에 상대방 추가
         // 2. 사용자에게 온 팔로우 수락 요청 알림 삭제
         // 3. 상대방에게 사용자가 팔로우를 수락했다는 알림 보내기
-        // 4. 상대방의 팔로워 목록에 사용자가 없으면 상대방에게 맞팔로우 요청 알림 보내기
+        // 4. 상대방의 팔로우 목록에 사용자가 없으면 상대방에게 맞팔로우 요청 알림 보내기
         for (String follow_id : followList) {
             mainService.privateFollowNotiMainService(session_user_id, follow_id);
         }

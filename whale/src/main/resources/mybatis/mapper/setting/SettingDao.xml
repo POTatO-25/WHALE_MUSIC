@@ -69,7 +69,7 @@
 		FROM USER_NOTIFICATION_ONOFF
 		WHERE USER_ID = #{session_user_id}
 	</select>
-	<select id="getAccountPrivacyByUserId" resultType="com.tech.whale.setting.dto.UserSettingDto">
+	<select id="getAccountPrivacyByUserId" resultType="int">
 		SELECT ACCOUNT_PRIVACY FROM USER_SETTING WHERE USER_ID = #{session_user_id}
 	</select>
 	<select id="getDarkmode" resultType="com.tech.whale.setting.dto.UserSettingDto">

@@ -71,6 +71,11 @@
         // 서버 응답 처리
         xhr.onreadystatechange = function () {
             if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
+                if (accountPrivacy === 1) {
+                    alert("비공개 계정 설정이 완료되었습니다.");
+                } else {
+                    alert("공개 계정 설징이 완료되었습니다.");
+                }
                 console.log('Privacy setting updated successfully');
             }
         };

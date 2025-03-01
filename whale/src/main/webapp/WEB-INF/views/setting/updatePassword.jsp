@@ -49,26 +49,18 @@
 		$(document).ready(function() {
 			// 완료 버튼 숨기기
 			$("#completeBtn").hide();
-
-			// 비밀번호 입력 이벤트를 제대로 바인딩(입력 이벤트가 발생할 때마다 validatedPassword 함수 호출)
-			$("#current_password, #update_password, #check_password").on("input", validatePassword);
 		});
 
 		// 사용자가 입력한 현재 비밀번호 확인 함수
 		function checkCurrentPassword(current_password) {
-			console.log("Current Password: ", current_password); // debug
-
 			// ajax 요청
 			$.ajax({
 				url: "/whale/checkCurrentPassword",
 				type: "POST",
-				data: { current_password: current_password }, // 사용자가 입력한 비밀번호를 전송
+				data: { current_password: current_password }, // 사용자가 입력한 비밀번호를 data에 current_password로 담아서 보냄
 
 				// 서버 응답을 성공적으로 받은 경우 실행될 콜백 함수
 				success: function(response) {
-					console.log("응답: ", response); // debug
-
-					// 응답의 status가 'valid'인 경우
 					if (response.status === "valid") {
 						// 현재 비밀번호 컨테이너 숨기기
 						$("#current-password-container").hide();
@@ -137,12 +129,10 @@
 				// 필드가 비어있으면
 				password_match_hint.html(""); // 힌트 비우기
 				password_checkmark_2.html(""); // 체크마크 제거
-				$("#completeBtn").hide(); // 완료 버튼 숨기기
 			} else if ((currentPassword === newPassword) && (newPassword === checkPassword)) {
 				// 현재 비밀번호와 새로운 비밀번호가 같으면서 확인 비밀번호도 일치하는 경우
 				password_match_hint.text("현재 비밀번호 사용 불가능").css("color", "#FF6C6C"); // 힌트 표시
 				password_checkmark_2.html(""); // 체크마크 제거
-				$("#completeBtn").hide(); // 완료 버튼 숨기기
 			} else if (newPassword === checkPassword && passwordRegex.test(newPassword)) {
 				// 새로운 비밀번호와 확인 비밀번호가 일치하고 정규식 조건을 만족하는 경우
 				password_match_hint.html(""); // 힌트 비우기
@@ -151,13 +141,12 @@
 			} else {
 				password_checkmark_2.html(""); // 체크마크 제거
 				password_match_hint.text("불일치").css("color", "#FF6C6C"); // 힌트 표시
-				$("#completeBtn").hide(); // 완료 버튼 숨기기
 			}
 		}
 
 		// 비밀번호 변경 요청 처리하는 함수
 		function updatePassword() {
-			let newPassword = $("#update_password").val(); // 새로운 비밀번호
+			let newPassword = $("#update_password").val();
 
 			// 서버에 새로운 비밀번호 전송
 			$.ajax({
