@@ -25,7 +25,7 @@ public interface SettingDao {
 	public StartpageDto getStartpageSetting(String session_user_id);
 	public void updateStartpageSetting(String userId, String left, String right);
 	public PageAccessDto getPageAccessSetting(String session_user_id);
-	public void updatePageAccessSetting(String userId, String settingType, String selectedValue);
+	public void updatePageAccessSetting(String session_user_id, String settingType, String selectedValue);
 	public List<LikeListDto> getFilteredPostLikeList(String session_user_id, String orderBy, String postType);
 	public List<CommentListDto> getFilteredPostCommentList(String session_user_id, String orderBy, String postType);
 	public List<CommentListDto> getFilteredPostReplyCommentList(String session_user_id, String orderBy, String postType);

@@ -399,6 +399,7 @@ public class SettingController {
     @ResponseBody
     public void updatePageAccessSetting(@RequestParam("settingType") String settingType, @RequestParam("selectedValue") String selectedValue, @SessionAttribute("user_id") String session_user_id) {
         System.out.println("updatePageAccessSetting() ctr");
+        System.out.println("session user id :" + session_user_id);
 
         settingService.updatePageAccessSetting(session_user_id, settingType, selectedValue);
     }
@@ -480,7 +481,7 @@ public class SettingController {
         return "redirect:/profileHome?u="+(String) session.getAttribute("user_id");
     }
 
-    @RequestMapping("/deleteAccount")
+    @GetMapping("/deleteAccount")
     public String deleteAccount(HttpSession session) {
         System.out.println("deleteAccount ctr()");
         String session_user_id = (String) session.getAttribute("user_id");
