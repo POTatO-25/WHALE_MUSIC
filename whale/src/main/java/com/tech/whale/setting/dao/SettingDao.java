@@ -23,7 +23,7 @@ public interface SettingDao {
 	public UserSettingDto getDarkmode(String session_user_id);
 	public void updateDarkmode(String session_user_id, int darkmodeOn);
 	public StartpageDto getStartpageSetting(String session_user_id);
-	public void updateStartpageSetting(String userId, String left, String right);
+	public void updateStartpageSetting(String session_user_id, String left, String right);
 	public PageAccessDto getPageAccessSetting(String session_user_id);
 	public void updatePageAccessSetting(String session_user_id, String settingType, String selectedValue);
 	public List<LikeListDto> getFilteredPostLikeList(String session_user_id, String orderBy, String postType);
