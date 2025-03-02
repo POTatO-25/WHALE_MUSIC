@@ -205,7 +205,7 @@ public class SettingController {
         return "success";
     }
 
-    @RequestMapping("/hiddenFeed")
+    @GetMapping("/hiddenFeed")
     public String hiddenFeed(HttpSession session, Model model) {
         System.out.println("hiddenFeed() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
