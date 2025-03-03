@@ -142,7 +142,7 @@
     function toggleDropdown(button) {
         const dropdownContent = button.nextElementSibling; // 버튼의 다음 형제요소(dropdown-content) 가져오기
         closeAllDropdowns(); // 다른 드롭다운 닫기
-        dropdownContent.classList.toggle('show'); // 드롭다운 열기/닫기
+        dropdownContent.classList.add('show'); // 드롭다운 열기
 
         // 현재 버튼의 텍스트 가져오기
         const currentValue = button.querySelector('.dropbtn_content').innerText;
@@ -156,7 +156,6 @@
         };
 
         const options = dropdownContent.querySelectorAll('div'); // 드롭다운 메뉴 안의 모든 옵션 요소 가져오기
-        // options에 포함된 각 요소를 순회하며, 순회 중 현재 요소는 option 변수에 저장됨
         options.forEach(option => {
             // 각 옵션의 텍스트가 반대 옵션과 일치하면 표시('block'), 그렇지 않으면 숨기기('none')
             option.style.display = option.innerText === optionPairs[currentValue] ? 'block' : 'none';

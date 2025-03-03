@@ -225,8 +225,9 @@ public class SettingController {
         return "setting/activity";
     }
 
-    @RequestMapping("/likeList")
-    public String likeList(@RequestParam(defaultValue = "최신순") String sortOrder, @RequestParam(defaultValue = "게시글") String postType, HttpSession session, Model model) {
+    @GetMapping("/likeList")
+    public String likeList(@RequestParam(defaultValue = "최신순") String sortOrder, @RequestParam(defaultValue = "게시글") String postType,
+                           HttpSession session, Model model) {
         System.out.println("likeList() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
