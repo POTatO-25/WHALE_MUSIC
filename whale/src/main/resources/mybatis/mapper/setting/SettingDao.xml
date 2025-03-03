@@ -175,7 +175,6 @@
 				P.COMMUNITY_ID,
 				P.POST_TITLE,
 				P.POST_TEXT,
-				UI.USER_IMAGE_URL AS POST_OWNER_IMAGE,
 				UI.USER_ID AS POST_OWNER_ID,
 				PC.POST_COMMENTS_ID,
 				PC.PARENT_COMMENTS_ID AS POST_PARENT_COMMENTS_ID,
@@ -213,7 +212,7 @@
 			</otherwise>
 		</choose>
 	</select>
-	<select id="getFilteredPostReplyCommentList" parameterType="map" resultType="com.tech.whale.setting.dto.CommentListDto">
+	<select id="getFilteredCommentReplyList" parameterType="map" resultType="com.tech.whale.setting.dto.CommentListDto">
 		<choose>
 			<when test="postType == '게시글'">
 				SELECT

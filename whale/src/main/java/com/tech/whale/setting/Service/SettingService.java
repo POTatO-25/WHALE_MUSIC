@@ -104,15 +104,15 @@ public class SettingService {
     }
 
     public List<CommentListDto> filteredPostCommentList(String session_user_id, String orderBy, String postType) {
-        List<CommentListDto> postFeedList = settingDao.getFilteredPostCommentList(session_user_id, orderBy, postType);
-
-        return postFeedList;
-    }
-
-    public List<CommentListDto> filteredPostReplyCommentList(String session_user_id, String orderBy, String postType) {
-        List<CommentListDto> postFeedCommentList = settingDao.getFilteredPostReplyCommentList(session_user_id, orderBy, postType);
+        List<CommentListDto> postFeedCommentList = settingDao.getFilteredPostCommentList(session_user_id, orderBy, postType);
 
         return postFeedCommentList;
+    }
+
+    public List<CommentListDto> filteredCommentReplyList(String session_user_id, String orderBy, String postType) {
+        List<CommentListDto> postFeedCommentReplyList = settingDao.getFilteredCommentReplyList(session_user_id, orderBy, postType);
+
+        return postFeedCommentReplyList;
     }
 
     public UserNotificationDto notificationSetting(String session_user_id) {

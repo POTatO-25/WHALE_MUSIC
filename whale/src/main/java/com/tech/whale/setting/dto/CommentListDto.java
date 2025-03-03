@@ -16,7 +16,6 @@ public class CommentListDto {
 	private String post_title;
 	private String post_img_url;
 	private String post_text;
-	private String post_owner_image;
 	private String post_owner_id;
 	private int post_comments_id;
 	private Integer post_parent_comments_id;

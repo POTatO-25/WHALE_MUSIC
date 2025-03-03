@@ -28,7 +28,7 @@ public interface SettingDao {
 	public void updatePageAccessSetting(String session_user_id, String settingType, String selectedValue);
 	public List<LikeListDto> getFilteredPostLikeList(String session_user_id, String orderBy, String postType);
 	public List<CommentListDto> getFilteredPostCommentList(String session_user_id, String orderBy, String postType);
-	public List<CommentListDto> getFilteredPostReplyCommentList(String session_user_id, String orderBy, String postType);
+	public List<CommentListDto> getFilteredCommentReplyList(String session_user_id, String orderBy, String postType);
 	public List<HiddenFeedDto> getHiddenFeedList(String session_user_id);
 	public void updateRepresentiveSong(String session_user_id, String trackId);
 	public List<String> getFollowRequestList(String session_user_id);

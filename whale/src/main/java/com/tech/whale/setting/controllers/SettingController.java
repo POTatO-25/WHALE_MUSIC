@@ -242,15 +242,15 @@ public class SettingController {
         return "setting/likeList";
     }
 
-    @RequestMapping("/commentList")
+    @GetMapping("/commentList")
     public String commentList(@RequestParam(defaultValue = "최신순") String sortOrder, @RequestParam(defaultValue = "게시글") String postType, HttpSession session, Model model) {
         System.out.println("commentList() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         String orderBy = sortOrder.equals("최신순") ? "DESC" : "ASC";
 
-        List<CommentListDto> postFeedList = settingService.filteredPostCommentList(session_user_id, orderBy, postType); // 글 정보와 댓글 정보
-        List<CommentListDto> postFeedCommentList = settingService.filteredPostReplyCommentList(session_user_id, orderBy, postType); // 답글 정보
+        List<CommentListDto> postFeedCommentList = settingService.filteredPostCommentList(session_user_id, orderBy, postType); // 글 정보와 댓글 정보
+        List<CommentListDto> postFeedCommentReplyList = settingService.filteredCommentReplyList(session_user_id, orderBy, postType); // 답글 정보
 
         // 게시글과 피드 ID를 각각 중복 없이 저장할 Set 생성
         Set<Integer> uniquePostIds = new HashSet<>(); // 게시글 ID를 저장하는 Set
@@ -260,20 +260,18 @@ public class SettingController {
         List<CommentListDto> filteredPostFeedCommentList = new ArrayList<>();
 
         // postFeedList에 있는 각 데이터를 순회하며 중복 제거 작업 수행
-        for (CommentListDto dto : postFeedList) {
-            // 현재 선택된 postType이 게시글이고, Set(uniquePostIds)에 현재 게시글 ID(dto.getPost_id())를 추가했을 때 중복이 아니라면
+        for (CommentListDto dto : postFeedCommentList) {
+            // 현재 선택된 postType이 게시글이면서, Set(uniquePostIds)에 현재 게시글 ID(dto.getPost_id())를 추가했을 때 중복이 아니라면
             // 중복되지 않은 게시글 데이터를 결과 리스트에 추가
             if ("게시글".equals(postType) && uniquePostIds.add(dto.getPost_id())) {
                 filteredPostFeedCommentList.add(dto);
-                // 현재 선택된 postType이 피드이고, Set(uniqueFeedIds)에 현재 피드 ID(dto.getFeed_id())를 추가했을 때 중복이 아니라면
-                // 중복되지 않은 피드 데이터를 결과 리스트에 추가
             } else if ("피드".equals(postType) && uniqueFeedIds.add(dto.getFeed_id())) {
                 filteredPostFeedCommentList.add(dto);
             }
         }
 
         model.addAttribute("postFeedList", filteredPostFeedCommentList); // 중복 제거된 리스트
-        model.addAttribute("postFeedCommentList", postFeedCommentList);
+        model.addAttribute("postFeedCommentList", postFeedCommentReplyList);
         model.addAttribute("selectedSortOrder", sortOrder);
         model.addAttribute("selectedPostType", postType);
 
