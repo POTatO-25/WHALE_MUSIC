@@ -24,10 +24,8 @@ import com.tech.whale.streaming.service.StreamingService;
 
 @Controller
 public class SettingController {
-    UserInfoDto userinfoDto;
     StartpageDto startpageDto;
     UserSettingDto userSettingDto;
-    UserNotificationDto userNotificationDto;
     PageAccessDto pageAccessDto;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -278,13 +276,13 @@ public class SettingController {
         return "setting/commentList";
     }
 
-    @RequestMapping("/notification")
+    @GetMapping("/notification")
     public String notification(HttpSession session, Model model) {
         System.out.println("notification() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에 저장된 알림 상태 가져오기
-        userNotificationDto = settingService.notificationSetting(session_user_id);
+        UserNotificationDto userNotificationDto = settingService.notificationSetting(session_user_id);
 
         model.addAttribute("allNotificationOff", userNotificationDto.getAll_notification_off());
         model.addAttribute("likeNotificationOn", userNotificationDto.getLike_notification_onoff());
@@ -296,7 +294,9 @@ public class SettingController {
 
     @PostMapping("/updateNotifications")
     @ResponseBody
-    public String updateNotifications(@RequestParam("all_notification_off") int allNotificationOff, @RequestParam("like_notification_onoff") int likeNotificationOnoff, @RequestParam("comment_notification_onoff") int commentNotificationOnoff, @RequestParam("message_notification_onoff") int messageNotificationOnoff, HttpSession session) {
+    public String updateNotifications(@RequestParam("all_notification_off") int allNotificationOff, @RequestParam("like_notification_onoff") int likeNotificationOnoff,
+                                      @RequestParam("comment_notification_onoff") int commentNotificationOnoff, @RequestParam("message_notification_onoff") int messageNotificationOnoff,
+                                      HttpSession session) {
         System.out.println("updateNotifications() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
@@ -307,19 +307,20 @@ public class SettingController {
 
     @PostMapping("/updateIndividualNotification")
     @ResponseBody
-    public String updateIndividualNotification(@RequestParam("like_notification_onoff") Optional<Integer> likeNotificationOnOff, @RequestParam("comment_notification_onoff") Optional<Integer> commentNotificationOnOff, @RequestParam("message_notification_onoff") Optional<Integer> messageNotificationOnOff, HttpSession session) {
-        // 각각의 매개변수를 Optional<Integer> 타입으로 전달
+    public String updateIndividualNotification(@RequestParam(value = "like_notification_onoff", required = false) Integer likeNotificationOnOff,
+                                               @RequestParam(value = "comment_notification_onoff", required = false) Integer commentNotificationOnOff,
+                                               @RequestParam(value = "message_notification_onoff", required = false) Integer messageNotificationOnOff, HttpSession session) {
         System.out.println("updateIndividualNotification() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         // 각 알림 상태에 따라 DB 업데이트 처리
-        if (likeNotificationOnOff.isPresent()) { // isPresent()를 사용해 값이 있는지 여부를 확인(값이 존재하면 true, 값이 없으면 false)
+        if (likeNotificationOnOff != null) {
             settingService.updateLikeNotification(session_user_id, likeNotificationOnOff);
         }
-        if (commentNotificationOnOff.isPresent()) {
+        if (commentNotificationOnOff != null) {
             settingService.updateCommentNotification(session_user_id, commentNotificationOnOff);
         }
-        if (messageNotificationOnOff.isPresent()) {
+        if (messageNotificationOnOff != null) {
             settingService.updateMessageNotification(session_user_id, messageNotificationOnOff);
         }
 

@@ -20,9 +20,7 @@ public class SettingService {
         this.settingDao = settingDao;
     }
 
-    UserInfoDto userInfoDto;
     UserSettingDto userSettingDto;
-    UserNotificationDto userNotificationDto;
     StartpageDto startpageDto;
     PageAccessDto pageAccessDto;
 
@@ -116,7 +114,7 @@ public class SettingService {
     }
 
     public UserNotificationDto notificationSetting(String session_user_id) {
-        userNotificationDto = settingDao.getNotificationSettingsByUserId(session_user_id);
+        UserNotificationDto userNotificationDto = settingDao.getNotificationSettingsByUserId(session_user_id);
 
         return userNotificationDto;
     }
@@ -126,16 +124,16 @@ public class SettingService {
         System.out.println("DB 업데이트 성공");
     }
 
-    public void updateLikeNotification(String session_user_id, Optional<Integer> likeNotificationOnoff) {
-        settingDao.updateLikeNotification(session_user_id, likeNotificationOnoff.get()); // get()으로 값을 꺼내서 사용
+    public void updateLikeNotification(String session_user_id, Integer likeNotificationOnoff) {
+        settingDao.updateLikeNotification(session_user_id, likeNotificationOnoff);
     }
 
-    public void updateCommentNotification(String session_user_id, Optional<Integer> commentNotificationOnoff) {
-        settingDao.updateCommentNotification(session_user_id, commentNotificationOnoff.get());
+    public void updateCommentNotification(String session_user_id, Integer commentNotificationOnoff) {
+        settingDao.updateCommentNotification(session_user_id, commentNotificationOnoff);
     }
 
-    public void updateMessageNotification(String session_user_id, Optional<Integer> messageNotificationOnoff) {
-        settingDao.updateMessageNotification(session_user_id, messageNotificationOnoff.get());
+    public void updateMessageNotification(String session_user_id, Integer messageNotificationOnoff) {
+        settingDao.updateMessageNotification(session_user_id, messageNotificationOnoff);
     }
 
     public UserSettingDto darkmode(String session_user_id) {

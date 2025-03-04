@@ -30,49 +30,49 @@
 	    </div>
 	    <div class="setting-item">
 	        모든 알림 해제
-	        <input type="checkbox" id="toggle-slide-1" class="toggle-slide" />
-	        <label for="toggle-slide-1"></label>
+	        <input type="checkbox" id="toggle-allnotificationoff" class="toggle-slide" />
+	        <label for="toggle-allnotificationoff"></label>
 	    </div>
 	    <div class="setting-item">
 	        좋아요
-	        <input type="checkbox" id="toggle-slide-2" class="toggle-slide" />
-	        <label for="toggle-slide-2"></label>
+	        <input type="checkbox" id="toggle-likeon" class="toggle-slide" />
+	        <label for="toggle-likeon"></label>
 	    </div>
 	    <div class="setting-item">
 	        댓글
-	        <input type="checkbox" id="toggle-slide-3" class="toggle-slide" />
-	        <label for="toggle-slide-3"></label>
+	        <input type="checkbox" id="toggle-commenton" class="toggle-slide" />
+	        <label for="toggle-commenton"></label>
 	    </div>
 	    <div class="setting-item">
 	        메시지
-	        <input type="checkbox" id="toggle-slide-4" class="toggle-slide" />
-	        <label for="toggle-slide-4"></label>
+	        <input type="checkbox" id="toggle-messageon" class="toggle-slide" />
+	        <label for="toggle-messageon"></label>
 	    </div>
 	</div>
 </div>
 <script>
 	// JSP에서 서버로부터 받은 알림 설정 값을 자바스크립트 변수로 전달
-	var allNotificationOff= ${allNotificationOff};
-	var likeNotificationOn = ${likeNotificationOn};
-	var commentNotificationOn = ${commentNotificationOn};
-	var messageNotificationOn = ${messageNotificationOn};
+	let allNotificationOff= ${allNotificationOff};
+	let likeNotificationOn = ${likeNotificationOn};
+	let commentNotificationOn = ${commentNotificationOn};
+	let messageNotificationOn = ${messageNotificationOn};
 
 	// 페이지 로드 시, 서버에서 전달받은 값을 각 토글 스위치의 초기 상태 설정
 	window.onload = function() {
-		document.getElementById('toggle-slide-1').checked = allNotificationOff == 1;
-		document.getElementById('toggle-slide-2').checked = likeNotificationOn == 1;
-		document.getElementById('toggle-slide-3').checked = commentNotificationOn == 1;
-		document.getElementById('toggle-slide-4').checked = messageNotificationOn == 1;
+		document.getElementById('toggle-allnotificationoff').checked = allNotificationOff == 1;
+		document.getElementById('toggle-likeon').checked = likeNotificationOn == 1;
+		document.getElementById('toggle-commenton').checked = commentNotificationOn == 1;
+		document.getElementById('toggle-messageon').checked = messageNotificationOn == 1;
 	};
 
 	// 모든 알림 해제 토글 버튼에 변경 이벤트 리스너 추가
-	document.getElementById('toggle-slide-1').addEventListener('change', function() {
+	document.getElementById('toggle-allnotificationoff').addEventListener('change', function() {
 		// 현재 토글 상태 확인해서 값 설정
 	    let allNotificationOff = this.checked ? 1 : 0;
 	
 	    // AJAX 요청
 	    const xhr = new XMLHttpRequest(); // 서버에 요청을 보내기 위한 XMLHttpRequest 객체 생성
-	    xhr.open('POST', '/whale/updateNotifications', true); // 서버에 보낼 요청을 post 방식으로 설정하고 url 지정
+	    xhr.open('POST', '/whale/updateNotifications', true);
 	    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	
 	    // 서버로 데이터 전송
@@ -100,51 +100,51 @@
 	        console.log('모든 알림 해제 ON');
 	        
 	        // 나머지 세 개의 알림을 OFF 상태로 설정
-	        document.getElementById('toggle-slide-2').checked = false;
-	        document.getElementById('toggle-slide-3').checked = false;
-	        document.getElementById('toggle-slide-4').checked = false;
+	        document.getElementById('toggle-likeon').checked = false;
+	        document.getElementById('toggle-commenton').checked = false;
+	        document.getElementById('toggle-messageon').checked = false;
 
 	        // 나머지 세 개의 알림을 비활성화 상태로 설정
-	        document.getElementById('toggle-slide-2').disabled = true;
-	        document.getElementById('toggle-slide-3').disabled = true;
-	        document.getElementById('toggle-slide-4').disabled = true;
+	        document.getElementById('toggle-likeon').disabled = true;
+	        document.getElementById('toggle-commenton').disabled = true;
+	        document.getElementById('toggle-messageon').disabled = true;
 	    } else {
 	        console.log('모든 알림 해제 OFF');
 
 	        // 나머지 세 개의 알림을 ON 상태로 설정
-			document.getElementById('toggle-slide-2').checked = true;
-			document.getElementById('toggle-slide-3').checked = true;
-			document.getElementById('toggle-slide-4').checked = true;
+			document.getElementById('toggle-likeon').checked = true;
+			document.getElementById('toggle-commenton').checked = true;
+			document.getElementById('toggle-messageon').checked = true;
 
 	        // 나머지 세 개의 알림을 활성화 상태로 설정
-	        document.getElementById('toggle-slide-2').disabled = false;
-	        document.getElementById('toggle-slide-3').disabled = false;
-	        document.getElementById('toggle-slide-4').disabled = false;
+	        document.getElementById('toggle-likeon').disabled = false;
+	        document.getElementById('toggle-commenton').disabled = false;
+	        document.getElementById('toggle-messageon').disabled = false;
 	    }
 	});
 
-	// 좋아요 알림 토글 버튼에 변경 이벤트 리스너 추가
-	document.getElementById('toggle-slide-2').addEventListener('change', function() {
+	// 좋아요 알림 토글버튼 change 이벤트 리스너
+	document.getElementById('toggle-likeon').addEventListener('change', function() {
 		// 좋아요 알림의 상태 전달(체크 여부에 따라 true/false)
 		updateIndividualNotification('like_notification_onoff', this.checked);
 	});
-	// 댓글 알림 토글 버튼에 변경 이벤트 리스너 추가
-	document.getElementById('toggle-slide-3').addEventListener('change', function() {
+	// 댓글 알림 토글버튼 변경 change 리스너
+	document.getElementById('toggle-commenton').addEventListener('change', function() {
 		// 댓글 알림의 상태 전달(체크 여부에 따라 true/false)
 		updateIndividualNotification('comment_notification_onoff', this.checked);
 	});
-	// 메시지 알림 토글 버튼에 변경 이벤트 리스너 추가
-	document.getElementById('toggle-slide-4').addEventListener('change', function() {
+	// 메시지 알림 토글버튼 변경 change 리스너
+	document.getElementById('toggle-messageon').addEventListener('change', function() {
 		// 메시지 알림의 상태 전달(체크 여부에 따라 true/false)
 		updateIndividualNotification('message_notification_onoff', this.checked);
 	});
 
 	// 알림 개별 설정 업데이트 함수
 	function updateIndividualNotification(notificationType, isOn) {
-		const xhr = new XMLHttpRequest(); // XMLHttpRequest 객체 생성해서 서버와 비동기 통신 준비
+		const xhr = new XMLHttpRequest();
 		xhr.open('POST', '/whale/updateIndividualNotification', true);
 		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-		xhr.send(notificationType + "=" + (isOn ? 1 : 0)); // notificationType은 알림 유형, isOn은 0 또는 1
+		xhr.send(notificationType + "=" + (isOn ? 1 : 0));
 
 		// 요청 상태 변경 시 호출되는 이벤트 핸들러
 		xhr.onreadystatechange = function() {
