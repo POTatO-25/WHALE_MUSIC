@@ -2,34 +2,12 @@ document.addEventListener("DOMContentLoaded", function () {
     // 다크 모드 처리가 필요한 요소들을 객체로 정의하여 배열에 담음
     const elements = [
         {
-            element: document.querySelector('.setting-body'),
-            toggleElement: document.getElementById('toggle-slide'),
-            extraInit: function(darkmodeOn, isDarkMode, element) {
-                if (this.toggleElement) { // toggleSlide 요소가 존재하는지 확인
-                    this.toggleElement.checked = isDarkMode; // 토글 스위치의 체크 상태를 현재 다크 모드 상태로 설정
-                    element.classList.toggle("dark", isDarkMode); // 다크 모드가 활성화되어 있으면 "dark" 클래스를 추가
-                    element.classList.toggle("light", !isDarkMode); // 다크 모드가 비활성화되어 있으면 "light" 클래스를 추가
-
-                    // 토글 스위치의 상태 변경에 대한 이벤트 리스너
-                    this.toggleElement.addEventListener('change', function () {
-                        darkmodeOn = this.checked ? "1" : "0"; // 토글 버튼이 체크되어 있으면 1, 아니면 0
-                        localStorage.setItem('darkmodeOn', darkmodeOn); // localstorage에 다크모드 설정 값 저장
-                        element.setAttribute("data-darkmode", darkmodeOn); // data-darkmode 속성 설정
-                        element.classList.toggle("dark", darkmodeOn === "1"); // 다크 모드 상태에 따라 "dark" 클래스를 추가하거나 제거
-                        element.classList.toggle("light", darkmodeOn !== "1");
-                        window.parent.postMessage({darkmodeOn: darkmodeOn}, "*"); // 부모 창에 다크 모드 상태를 알리는 메시지를 보냄
-
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', '/whale/updateDarkmode', true);
-                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                        xhr.send('darkmode_setting_onoff=' + darkmodeOn); // 서버로 다크 모드 상태를 전송
-                    });
-                }
-            },
+            element: document.querySelector('.setting-body'), // settingElement
+            extraInit: null,
             extraMessageHandler: null
         },
         {
-            element: document.querySelector('.feed-container'),
+            element: document.querySelector('.feed-container'), // feedElement
             extraInit: null,
             extraMessageHandler: null
         },
@@ -59,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
             extraMessageHandler: null
         },
         {
-            element: document.querySelector('.streamingBody'),
+            element: document.querySelector('.streamingBody'), // streamingElement
             extraInit: function(darkmodeOn, isDarkMode, element) {
                 const bodyClass = document.body.classList.contains("dark") ? "dark" : "light";
                 if (page !== 'home') {
@@ -115,18 +93,17 @@ document.addEventListener("DOMContentLoaded", function () {
             extraMessageHandler: null
         },
         {
-            element: document.querySelector('.searchHomeBody'),
+            element: document.querySelector('.searchHomeBody'), // searchElement
             extraInit: null,
             extraMessageHandler: null
         },
         {
-            element: document.querySelector('#messageMenuModal'),
+            element: document.querySelector('#messageMenuModal'), // messageElement
             extraInit: null,
             extraMessageHandler: null
         }
     ];
 
-    const toggleSlide = document.getElementById('toggle-slide');
     let darkmodeOn = localStorage.getItem('darkmodeOn') || "0";
 
     // 다크모드 설정에 따른 스크롤바 스타일 업데이트 함수
@@ -151,8 +128,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    // 요소에 대한 다크모드 처리 함수
-    const applyDarkMode = (elementObj) => {
+    // 요소에 대한 초기 설정 함수
+    const initialize = (elementObj) => {
         const element = elementObj.element;
         if (element) {
             element.setAttribute("data-darkmode", darkmodeOn); // data-darkmode 속성 설정
@@ -163,27 +140,11 @@ document.addEventListener("DOMContentLoaded", function () {
             if (elementObj.extraInit) {
                 elementObj.extraInit(darkmodeOn, isDarkMode, element);
             }
-
-            window.addEventListener('message', function (event) {
-                if (event.data && event.data.darkmodeOn !== undefined) {
-                    darkmodeOn = event.data.darkmodeOn;
-                    element.setAttribute("data-darkmode", darkmodeOn);
-                    const isDarkMode = darkmodeOn === "1";
-                    element.classList.toggle("dark", isDarkMode);
-                    element.classList.toggle("light", !isDarkMode);
-
-                    updateScrollbarStyle(); // 스크롤바 스타일 업데이트
-
-                    if (elementObj.extraMessageHandler) {
-                        elementObj.extraMessageHandler(darkmodeOn, element);
-                    }
-                }
-            });
         }
     };
 
-    // elements 배열의 각 요소에 대해 applyDarkMode 함수 적용
-    elements.forEach(applyDarkMode);
+    // elements 배열의 각 요소에 대해 initialize 함수 적용
+    elements.forEach(initialize);
 
     // 다른 창이나 탭에서 localStorage의 darkmodeOn 키에 변경 사항이 발생하면 다크 모드 상태를 동기화
     window.addEventListener('storage', function (event) {
@@ -198,15 +159,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     const isDark = darkmodeOn === "1";
                     element.classList.toggle("dark", isDark); // 다크 모드 활성화 여부에 따라 'dark' 클래스를 추가하거나 제거
                     element.classList.toggle("light", !isDark);
-                    if (elementObj.toggleElement) {
-                        elementObj.toggleElement.checked = isDark; // 다크모드이면 토글버튼이 체크되도록 설정
-                    }
                     if (elementObj.extraMessageHandler) {
                         elementObj.extraMessageHandler(darkmodeOn, element);
                     }
                 }
             });
-
             updateScrollbarStyle(); // 스크롤바 스타일 업데이트
         }
     });

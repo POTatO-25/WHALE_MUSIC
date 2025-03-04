@@ -136,10 +136,10 @@ public class SettingService {
         settingDao.updateMessageNotification(session_user_id, messageNotificationOnoff);
     }
 
-    public UserSettingDto darkmode(String session_user_id) {
-        userSettingDto = settingDao.getDarkmode(session_user_id);
+    public int darkmode(String session_user_id) {
+        int darkmodeValue = settingDao.getDarkmodeValue(session_user_id);
 
-        return userSettingDto;
+        return darkmodeValue;
     }
 
     public void updateDarkmode(String session_user_id, int darkmodeOn) {

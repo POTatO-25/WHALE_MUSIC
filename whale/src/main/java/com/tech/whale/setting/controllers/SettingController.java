@@ -25,7 +25,6 @@ import com.tech.whale.streaming.service.StreamingService;
 @Controller
 public class SettingController {
     StartpageDto startpageDto;
-    UserSettingDto userSettingDto;
     PageAccessDto pageAccessDto;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -327,15 +326,15 @@ public class SettingController {
         return "success";
     }
 
-    @RequestMapping("/accessibility")
+    @GetMapping("/accessibility")
     public String accessibility(HttpSession session, Model model) {
         System.out.println("accessibility() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에서 다크모드 설정 값 가져오기
-        userSettingDto = settingService.darkmode(session_user_id);
+        int darkmodeValue = settingService.darkmode(session_user_id);
 
-        model.addAttribute("darkmodeOn", userSettingDto.getDarkmode_setting_onoff());
+        model.addAttribute("darkmodeOn", darkmodeValue);
 
         return "setting/accessibility";
     }

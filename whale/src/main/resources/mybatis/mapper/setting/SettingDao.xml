@@ -72,6 +72,9 @@
 	<select id="getAccountPrivacyByUserId" resultType="int">
 		SELECT ACCOUNT_PRIVACY FROM USER_SETTING WHERE USER_ID = #{session_user_id}
 	</select>
+	<select id="getDarkmodeValue" resultType="int">
+		SELECT DARKMODE_SETTING_ONOFF FROM USER_SETTING WHERE USER_ID = #{session_user_id}
+	</select>
 	<select id="getDarkmode" resultType="com.tech.whale.setting.dto.UserSettingDto">
 		SELECT DARKMODE_SETTING_ONOFF FROM USER_SETTING WHERE USER_ID = #{session_user_id}
 	</select>

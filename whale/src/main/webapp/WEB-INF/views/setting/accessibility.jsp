@@ -61,7 +61,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // JSP에서 서버로부터 받은 알림 설정 값을 자바스크립트 변수로 전달
-        var darkmodeOn = ${darkmodeOn}
+        let darkmodeOn = ${darkmodeOn}
 
             // 페이지가 로드될 때 기본값 설정
             window.onload = function () {
@@ -77,6 +77,14 @@
             // 다크 모드 상태를 localStorage에 저장(페이지 새로고침 후에도 유지)
             localStorage.setItem('darkmodeOn', darkmodeOn);
 
+            // setting-body 요소 업데이트
+            const settingBody = document.querySelector('.setting-body');
+            if(settingBody) {
+                settingBody.setAttribute("data-darkmode", darkmodeOn);
+                settingBody.classList.toggle("dark", darkmodeOn == 1);
+                settingBody.classList.toggle("light", darkmodeOn != 1);
+            }
+
             // AJAX 요청
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/whale/updateDarkmode', true); // 서버에 POST 요청 보냄
@@ -88,11 +96,9 @@
             xhr.onreadystatechange = function () {
                 // 요청 상태가 DONE일 때
                 if (xhr.readyState === XMLHttpRequest.DONE) {
-                    // HTTP 상태코드가 200이면(= 요청이 성공적으로 처리되었으면)
                     if (xhr.status === 200) {
                         if (darkmodeOn === 1) {
                             console.log("Dark mode ON");
-
                         } else {
                             console.log("Dark mode OFF");
                         }
@@ -101,17 +107,6 @@
                     }
                 }
             };
-
-            // 현재 창이 iframe 안에 있을 경우, 해당 iframe의 ID를 가져오기
-            let currentIframe = window.frameElement.id;
-
-            // 다크모드 상태를 동기화(postMessage 메소드를 통해 iframe 간 메시지를 전달하고, 각 iframe은 자신의 상태를 업데이트하도록 동작)
-            if (currentIframe === 'rightIframe') { // 현재 iframe이 rightIframe이면
-                // 부모 창을 통해 leftIframe으로 다크모드 상태를 전송
-            	window.parent.document.getElementById('leftIframe').contentWindow.postMessage('darkmodeOn','https://localhost:5500');
-            } else {
-            	window.parent.document.getElementById('rightIframe').contentWindow.postMessage('darkmodeOn','https://localhost:5500');
-            }
         });
     });
 </script>

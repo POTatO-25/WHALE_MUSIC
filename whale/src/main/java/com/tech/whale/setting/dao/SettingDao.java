@@ -20,6 +20,7 @@ public interface SettingDao {
 	public void updateCommentNotification(String session_user_id, int commentNotificationOnOff);
 	public void updateMessageNotification(String session_user_id, int messageNotificationOnOff);
 	public int getAccountPrivacyByUserId(String session_user_id);
+	public int getDarkmodeValue(String session_user_id);
 	public UserSettingDto getDarkmode(String session_user_id);
 	public void updateDarkmode(String session_user_id, int darkmodeOn);
 	public StartpageDto getStartpageSetting(String session_user_id);
