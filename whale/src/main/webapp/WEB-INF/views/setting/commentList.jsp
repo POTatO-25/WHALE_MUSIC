@@ -124,7 +124,6 @@
 													<div class="date">${post.post_date}</div>
 												</div>
 											</div>
-
 											<div class="comments-section">
 												<c:forEach var="comment" items="${postFeedCommentList}">
 													<c:if test="${post.post_id == comment.re_post_id}">
@@ -148,9 +147,10 @@
 											<div class="feed-item">
 												<img src="${feed.feed_owner_image}" alt="owner_image" class="owner-image">
 												<div class="owner-id" style="font-weight: bold; margin-right: 4px; font-size: 19px;">${feed.feed_owner_id}</div> ${feed.feed_text}
-												<img src="${feed.feed_img_url}" alt="feed_img" id="feed-img">
+												<c:if test="${feed.feed_img_url != null}">
+													<img src="${feed.feed_img_url}" alt="feed_img" id="feed-img">
+												</c:if>
 											</div>
-
 											<div class="comments-section">
 												<c:forEach var="comment" items="${postFeedCommentList}">
 													<c:if test="${feed.feed_id == comment.re_feed_id}">
@@ -179,7 +179,7 @@
 	function toggleDropdown(button) {
 		const dropdownContent = button.nextElementSibling; // 버튼의 다음 형제요소(dropdown-content) 가져오기
 		closeAllDropdowns();
-		dropdownContent.classList.toggle('show'); // 드롭다운 열기/닫기
+		dropdownContent.classList.add('show'); // 드롭다운 열기
 
 		// 현재 버튼의 텍스트 가져오기
 		const currentValue = button.querySelector('.dropbtn_content').innerText;
@@ -192,7 +192,6 @@
 			'피드': '게시글'
 		};
 		const options = dropdownContent.querySelectorAll('div'); // 드롭다운 메뉴 안의 모든 옵션 요소 가져오기
-		// options에 포함된 각 요소를 순회하며, 순회 중 현재 요소는 option 변수에 저장됨
 		options.forEach(option => {
 			// 각 옵션의 텍스트가 반대 옵션과 일치하면 표시('block'), 그렇지 않으면 숨기기('none')
 			option.style.display = option.innerText === optionPairs[currentValue] ? 'block' : 'none';
@@ -207,10 +206,8 @@
 		const dropbtn = element.closest('.dropdown').querySelector('.dropbtn_content');
 		dropbtn.innerText = value; // 선택한 값으로 드롭다운 버튼의 텍스트 변경
 
-		// 모든 드롭다운 메뉴 닫기
-		closeAllDropdowns();
+		closeAllDropdowns(); // 모든 드롭다운 메뉴 닫기
 
-		// 폼 제출
 		document.getElementById('filterForm').submit();
 	}
 
