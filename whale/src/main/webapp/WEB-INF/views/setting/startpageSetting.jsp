@@ -1,6 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -64,14 +63,12 @@
    </div>
 </div>
 <script>
-   // jsp에서 전달받은 시작페이지 설정값을 변수로 저장
-   var music = ${music};
-   var feed = ${feed};
-   var community = ${community};
-   var message = ${message};
-   
+   let music = ${music};
+   let feed = ${feed};
+   let community = ${community};
+   let message = ${message};
+
    window.onload = function() {
-       // DB에서 불러온 값에 따라 라디오 버튼을 체크
        document.getElementById('left-music').checked = music == 1;
        document.getElementById('left-feed').checked = feed == 1;
        document.getElementById('left-community').checked = community == 1;

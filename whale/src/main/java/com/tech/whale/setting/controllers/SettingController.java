@@ -24,7 +24,6 @@ import com.tech.whale.streaming.service.StreamingService;
 
 @Controller
 public class SettingController {
-    StartpageDto startpageDto;
     PageAccessDto pageAccessDto;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -351,17 +350,22 @@ public class SettingController {
         return "success";
     }
 
-    @RequestMapping("/startpageSetting")
+    @GetMapping("/startpageSetting")
     public String startpageSetting(HttpSession session, Model model) {
         System.out.println("startpageSetting() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
-        startpageDto = settingService.startpageSetting(session_user_id);
+        StartpageDto startpageDto = settingService.startpageSetting(session_user_id);
 
         model.addAttribute("music", startpageDto.getStartpage_music_setting());
         model.addAttribute("feed", startpageDto.getStartpage_feed_setting());
         model.addAttribute("community", startpageDto.getStartpage_community_setting());
         model.addAttribute("message", startpageDto.getStartpage_message_setting());
+
+        System.out.println(startpageDto.getStartpage_music_setting());
+        System.out.println(startpageDto.getStartpage_feed_setting());
+        System.out.println(startpageDto.getStartpage_community_setting());
+        System.out.println(startpageDto.getStartpage_message_setting());
 
         return "setting/startpageSetting";
     }
