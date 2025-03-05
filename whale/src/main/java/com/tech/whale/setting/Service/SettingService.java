@@ -12,17 +12,12 @@ import java.util.*;
 
 @Service
 public class SettingService {
-
     private final SettingDao settingDao;
 
     @Autowired
     public SettingService(SettingDao settingDao) {
         this.settingDao = settingDao;
     }
-
-    UserSettingDto userSettingDto;
-    StartpageDto startpageDto;
-    PageAccessDto pageAccessDto;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -148,7 +143,7 @@ public class SettingService {
     }
 
     public StartpageDto startpageSetting(String session_user_id) {
-        startpageDto = settingDao.getStartpageSetting(session_user_id);
+        StartpageDto startpageDto = settingDao.getStartpageSetting(session_user_id);
 
         return startpageDto;
     }
@@ -169,7 +164,7 @@ public class SettingService {
     }
 
     public PageAccessDto pageAccessSetting(String session_user_id) {
-        pageAccessDto = settingDao.getPageAccessSetting(session_user_id);
+        PageAccessDto pageAccessDto = settingDao.getPageAccessSetting(session_user_id);
 
         return  pageAccessDto;
     }

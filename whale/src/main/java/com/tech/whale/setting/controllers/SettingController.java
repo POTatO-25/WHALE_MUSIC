@@ -24,7 +24,6 @@ import com.tech.whale.streaming.service.StreamingService;
 
 @Controller
 public class SettingController {
-    PageAccessDto pageAccessDto;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private final MainService mainService;
@@ -362,11 +361,6 @@ public class SettingController {
         model.addAttribute("community", startpageDto.getStartpage_community_setting());
         model.addAttribute("message", startpageDto.getStartpage_message_setting());
 
-        System.out.println(startpageDto.getStartpage_music_setting());
-        System.out.println(startpageDto.getStartpage_feed_setting());
-        System.out.println(startpageDto.getStartpage_community_setting());
-        System.out.println(startpageDto.getStartpage_message_setting());
-
         return "setting/startpageSetting";
     }
 
@@ -381,13 +375,13 @@ public class SettingController {
         settingService.updateStartpageSetting(session_user_id, left, right);
     }
 
-    @RequestMapping("/pageAccessSetting")
+    @GetMapping("/pageAccessSetting")
     public String pageAccessSetting(HttpSession session, Model model) {
         System.out.println("pageAccessSetting() ctr");
         String session_user_id = (String) session.getAttribute("user_id");
 
         // DB에서 페이지 접근 설정 값 가져오기
-        pageAccessDto = settingService.pageAccessSetting(session_user_id);
+        PageAccessDto pageAccessDto = settingService.pageAccessSetting(session_user_id);
 
         model.addAttribute("mypage", pageAccessDto.getPage_access_mypage());
         model.addAttribute("notification", pageAccessDto.getPage_access_notification());

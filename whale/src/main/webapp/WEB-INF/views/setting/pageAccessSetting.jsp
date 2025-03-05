@@ -1,6 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -110,12 +109,11 @@
 	</div>
 </div>
 <script>
-	// jsp에서 전달받은 페이지 접근 설정값을 변수로 저장
-	var mypage = ${mypage};
-	var notification = ${notification};
-	var setting = ${setting};
-	var music = ${music};
-	var message = ${message};
+	let mypage = ${mypage};
+	let notification = ${notification};
+	let setting = ${setting};
+	let music = ${music};
+	let message = ${message};
 
 	window.onload = function() {
 		// DB에서 불러온 값에 따라 라디오 버튼을 체크
@@ -124,6 +122,7 @@
 		document.getElementById('setting-left').checked = setting == 0;
 		document.getElementById('music-left').checked = music == 0;
 		document.getElementById('message-left').checked = message == 0;
+
 		document.getElementById('mypage-right').checked = mypage == 1;
 		document.getElementById('notification-right').checked = notification == 1;
 		document.getElementById('setting-right').checked = setting == 1;
@@ -133,7 +132,6 @@
 		// 라디오 버튼 값 변경 시 설정 업데이트
 		document.querySelector('.setting-container').addEventListener('change', function(event) {
 			if(event.target.name === 'mypage' || event.target.name === 'notification' || event.target.name === 'setting' || event.target.name === 'music' || event.target.name === 'message') {
-				
 				const settingType = event.target.name; // 변경된 설정 항목 이름을 가져오기
 				const selectedValue = event.target.value; // 선택된 값(left 또는 right)을 가져오기
 
