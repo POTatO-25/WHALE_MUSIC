@@ -252,20 +252,20 @@ public class SettingController {
         Set<Integer> uniqueFeedIds = new HashSet<>(); // 피드 ID를 저장하는 Set
 
         // 중복 제거된 게시글 또는 피드 데이터를 담을 리스트
-        List<CommentListDto> filteredPostFeedCommentList = new ArrayList<>();
+        List<CommentListDto> filteredPostFeedList = new ArrayList<>();
 
         // postFeedList에 있는 각 데이터를 순회하며 중복 제거 작업 수행
         for (CommentListDto dto : postFeedCommentList) {
             // 현재 선택된 postType이 게시글이면서, Set(uniquePostIds)에 현재 게시글 ID(dto.getPost_id())를 추가했을 때 중복이 아니라면
             // 중복되지 않은 게시글 데이터를 결과 리스트에 추가
             if ("게시글".equals(postType) && uniquePostIds.add(dto.getPost_id())) {
-                filteredPostFeedCommentList.add(dto);
+                filteredPostFeedList.add(dto);
             } else if ("피드".equals(postType) && uniqueFeedIds.add(dto.getFeed_id())) {
-                filteredPostFeedCommentList.add(dto);
+                filteredPostFeedList.add(dto);
             }
         }
 
-        model.addAttribute("postFeedList", filteredPostFeedCommentList); // 중복 제거된 리스트
+        model.addAttribute("postFeedList", filteredPostFeedList); // 중복 제거된 리스트
         model.addAttribute("postFeedCommentList", postFeedCommentReplyList);
         model.addAttribute("selectedSortOrder", sortOrder);
         model.addAttribute("selectedPostType", postType);
