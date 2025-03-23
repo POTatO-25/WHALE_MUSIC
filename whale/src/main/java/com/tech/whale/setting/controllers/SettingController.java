@@ -169,7 +169,7 @@ public class SettingController {
         return "setting/accountPrivacy";
     }
 
-    @PostMapping
+    @PostMapping("/privateFollowNoti")
     @ResponseBody
     public String privateFollowNoti(HttpSession session) {
         System.out.println("privateFollowNoti() ctr");

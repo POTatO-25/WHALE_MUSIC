@@ -230,8 +230,8 @@
 	</insert>
 	
 	<insert id="insertFollowNoti">
-		INSERT INTO FOLLOW_NOTI (FOLLOW_NOTI_ID,FOLLOW_NOTI,USER_ID,FOLLOW_NOTI_USER_ID)
-		VALUES (FOLLOW_NOTI_SEQ.NEXTVAL,
+		INSERT INTO FOLLOW_NOTI (FOLLOW_NOTI,USER_ID,FOLLOW_NOTI_USER_ID)
+		VALUES (
 			   #{followNotiType},
 			   #{userId},
 			   #{targetId}
