@@ -18,10 +18,6 @@ public class CommentListDto {
 	private String post_text;
 	private String post_owner_id;
 	private int post_comments_id;
-	private Integer post_parent_comments_id;
-	private String post_commenter_image;
-	private String post_commenter_id;
-	private String post_comments_text;
 	private String post_date;
 
 	private int re_post_id;
@@ -37,11 +33,6 @@ public class CommentListDto {
 	private String feed_owner_image;
 	private String feed_owner_id;
 	private int feed_comments_id;
-	private Integer parent_comments_id;
-	private String commenter_image;
-	private String commenter_id;
-	private String feed_comments_text;
-	private String latest_comment_date;
 
 	private int re_feed_id;
 	private int re_feed_comments_id;

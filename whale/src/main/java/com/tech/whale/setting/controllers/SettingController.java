@@ -244,8 +244,8 @@ public class SettingController {
 
         String orderBy = sortOrder.equals("최신순") ? "DESC" : "ASC";
 
-        List<CommentListDto> postFeedCommentList = settingService.filteredPostCommentList(session_user_id, orderBy, postType); // 글 정보와 댓글 정보
-        List<CommentListDto> postFeedCommentReplyList = settingService.filteredCommentReplyList(session_user_id, orderBy, postType); // 답글 정보
+        List<CommentListDto> postFeedCommentList = settingService.filteredPostCommentList(session_user_id, orderBy, postType); // 글 정보
+        List<CommentListDto> postFeedCommentReplyList = settingService.filteredCommentReplyList(session_user_id, orderBy, postType); // 댓글과 답글 정보
 
         // 게시글과 피드 ID를 각각 중복 없이 저장할 Set 생성
         Set<Integer> uniquePostIds = new HashSet<>(); // 게시글 ID를 저장하는 Set
