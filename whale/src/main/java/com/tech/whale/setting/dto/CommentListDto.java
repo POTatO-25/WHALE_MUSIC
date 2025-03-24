@@ -40,9 +40,5 @@ public class CommentListDto {
 	private String re_commenter_image;
 	private String re_commenter_id;
 	private String re_feed_comments_text;
-	private String feed_comments_date;
-	private String re_parent_feed_comments_text;
-	private String re_parent_commenter_id;
-	private String re_parent_commenter_image;
 
 }
